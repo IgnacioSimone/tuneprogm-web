@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TuneProGM — Feature Showcase</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:     #03080f;
+      --bg2:    #060d1a;
+      --blue:   #0a7cf8;
+      --blue2:  #1e90ff;
+      --amber:  #c9930a;
+      --amber2: #f0b429;
+      --cyan:   #00d4ff;
+      --green:  #00e676;
+      --text:   #e4e8f0;
+      --mid:    #7a8ba0;
+      --dim:    #3d4f62;
+      --border: rgba(255,255,255,0.06);
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Scroll container — CSS snap nativo ───────────────── */
+    #scroll-container {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+    #scroll-container::-webkit-scrollbar { display: none; }
+
+    .snap-section {
+      height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── Nav fija ──────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 900;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      background: rgba(3,8,15,0.6);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+    }
+    .brand img { width: 28px; height: 28px; border-radius: 7px; object-fit: cover; }
+    .brand-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    }
+    .brand-name span { color: var(--blue); }
+    .nav-cta {
+      background: var(--blue); color: #fff; border: none;
+      border-radius: 8px; padding: 7px 18px;
+      font-size: 13px; font-weight: 600; font-family: 'Outfit', sans-serif;
+      text-decoration: none; cursor: pointer;
+      box-shadow: 0 0 20px rgba(10,124,248,0.35);
+      transition: all .2s;
+    }
+    .nav-cta:hover { opacity: .88; transform: translateY(-1px); }
+
+    /* ── Dots navegación lateral ───────────────────────────── */
+    #nav-dots {
+      position: fixed;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--dim);
+      cursor: pointer;
+      transition: all .35s cubic-bezier(.16,1,.3,1);
+      position: relative;
+    }
+    .dot::before {
+      content: attr(data-label);
+      position: absolute;
+      right: 18px; top: 50%;
+      transform: translateY(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--mid);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .2s;
+      pointer-events: none;
+    }
+    .dot:hover::before { opacity: 1; }
+    .dot.active {
+      background: var(--blue);
+      box-shadow: 0 0 10px rgba(10,124,248,0.7);
+      transform: scale(1.5);
+    }
+    .dot.active-amber {
+      background: var(--amber2);
+      box-shadow: 0 0 10px rgba(240,180,41,0.7);
+      transform: scale(1.5);
+    }
+
+    /* ── Progress bar top ──────────────────────────────────── */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      z-index: 1000;
+      transition: width .4s ease;
+      width: 0%;
+    }
+
+    /* ── Grain ─────────────────────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: .022; pointer-events: none; z-index: 9000;
+    }
+
+    /* ── Shared layout ─────────────────────────────────────── */
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 58px 64px 0;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .section-inner.reverse { direction: rtl; }
+    .section-inner.reverse > * { direction: ltr; }
+    .section-inner.center {
+      grid-template-columns: 1fr;
+      text-align: center;
+      justify-items: center;
+    }
+
+    .sec-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sec-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 24px; height: 1px;
+      background: var(--blue);
+    }
+    .sec-eyebrow.amber { color: var(--amber2); }
+    .sec-eyebrow.amber::before { background: var(--amber2); }
+    .sec-eyebrow.green { color: var(--green); }
+    .sec-eyebrow.green::before { background: var(--green); }
+
+    .sec-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 6vw, 82px);
+      line-height: .95;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+    .sec-title .hi { color: var(--blue); }
+    .sec-title .hi-amber { color: var(--amber2); }
+    .sec-title .hi-green { color: var(--green); }
+
+    .sec-desc {
+      font-size: 16px; color: var(--mid); line-height: 1.75;
+      font-weight: 300; max-width: 440px;
+      margin-bottom: 32px;
+    }
+
+    .sec-stat {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 96px; line-height: 1;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .sec-stat.amber {
+      background: linear-gradient(135deg, var(--amber), var(--amber2));
+      -webkit-background-clip: text; background-clip: text;
+    }
+    .sec-stat-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 600; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--dim); margin-top: 4px;
+    }
+
+    /* ── App Mockup ────────────────────────────────────────── */
+    .mockup-outer {
+      perspective: 1000px;
+    }
+    .mockup-box {
+      background: linear-gradient(145deg, #091422, #050d18);
+      border: 1px solid rgba(10,124,248,0.2);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow:
+        0 40px 80px rgba(0,0,0,0.7),
+        0 0 60px rgba(10,124,248,0.08),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      transform: rotateY(-8deg) rotateX(3deg);
+      transform-style: preserve-3d;
+      transition: transform .6s ease;
+      position: relative;
+    }
+    .mockup-box::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(10,124,248,0.5), transparent);
+    }
+    .mockup-outer:hover .mockup-box { transform: rotateY(-4deg) rotateX(1deg); }
+
+    .mockup-box.amber-theme {
+      border-color: rgba(201,147,10,0.25);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(201,147,10,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    .mockup-box.amber-theme::before {
+      background: linear-gradient(90deg, transparent, rgba(201,147,10,0.5), transparent);
+    }
+
+    .mock-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mock-logo {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    }
+    .mock-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+    .mock-dot.amber { background: var(--amber2); box-shadow: 0 0 6px var(--amber2); }
+    .mock-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; padding: 2px 7px; border-radius: 4px;
+      border: 1px solid rgba(10,124,248,0.3);
+      color: var(--blue); background: rgba(10,124,248,0.08);
+    }
+    .mock-badge.amber {
+      border-color: rgba(201,147,10,0.3);
+      color: var(--amber2); background: rgba(201,147,10,0.08);
+    }
+
+    /* Cards grid inside mockup */
+    .mock-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .mock-card {
+      border-radius: 7px; padding: 9px 6px; text-align: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all .4s ease;
+    }
+    .mock-card.glow-blue {
+      background: rgba(10,124,248,0.1);
+      border-color: rgba(10,124,248,0.35);
+      box-shadow: 0 0 16px rgba(10,124,248,0.2), inset 0 0 12px rgba(10,124,248,0.06);
+    }
+    .mock-card.glow-amber {
+      background: rgba(201,147,10,0.12);
+      border-color: rgba(201,147,10,0.4);
+      box-shadow: 0 0 16px rgba(201,147,10,0.25), inset 0 0 12px rgba(201,147,10,0.08);
+    }
+    .mock-card.glow-green {
+      background: rgba(0,230,118,0.08);
+      border-color: rgba(0,230,118,0.3);
+      box-shadow: 0 0 16px rgba(0,230,118,0.15);
+    }
+    .mc-lbl { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+    .mc-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 500;
+      color: var(--dim); margin-top: 3px;
+      transition: color .4s ease;
+    }
+    .mock-card.glow-blue  .mc-val { color: var(--blue); }
+    .mock-card.glow-amber .mc-val { color: var(--amber2); }
+    .mock-card.glow-green .mc-val { color: var(--green); }
+
+    .mock-bar-row { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+    .mock-bl { font-size: 8px; color: var(--dim); width: 36px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+    .mock-bt { flex: 1; height: 3px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+    .mock-bf { height: 100%; border-radius: 2px; width: 0; transition: width 1.2s cubic-bezier(.22,1,.36,1); }
+    .mock-bf.b { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .mock-bf.a { background: linear-gradient(90deg, var(--amber), var(--amber2)); }
+    .mock-bv { font-size: 8px; color: var(--blue); font-family: 'JetBrains Mono', monospace; width: 28px; text-align: right; }
+    .mock-bv.a { color: var(--amber2); }
+
+    .mock-footer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; color: var(--dim);
+      border-top: 1px solid var(--border);
+      padding-top: 8px; margin-top: 2px;
+      display: flex; justify-content: space-between;
+    }
+    .mock-status-dot { color: var(--blue); }
+    .mock-status-dot.amber { color: var(--amber2); }
+
+    /* ── Section 0: Hero ───────────────────────────────────── */
+    #s0 { background: var(--bg); }
+    #s0 canvas {
+      position: absolute; inset: 0;
+      pointer-events: none; z-index: 0;
+    }
+    .hero-inner {
+      position: relative; z-index: 1;
+      max-width: 1200px; margin: 0 auto;
+      padding: 58px 64px 0;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(10,124,248,0.1);
+      border: 1px solid rgba(10,124,248,0.25);
+      border-radius: 100px; padding: 5px 14px;
+      margin-bottom: 24px;
+    }
+    .hero-dot { width: 6px; height: 6px; background: var(--blue); border-radius: 50%; animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot {
+      0%,100% { box-shadow: 0 0 0 0 rgba(10,124,248,.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(10,124,248,0); }
+    }
+    .hero-eyebrow span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--blue); }
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 9vw, 110px);
+      line-height: .9; letter-spacing: 2px; margin-bottom: 20px;
+    }
+    .hero-title .hi {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--blue);
+    }
+    .hero-title .gm { color: var(--amber); }
+    .hero-sub { font-size: 17px; color: var(--mid); line-height: 1.7; font-weight: 300; margin-bottom: 36px; max-width: 400px; }
+    .hero-btns { display: flex; gap: 14px; }
+    .btn-p {
+      background: var(--blue); color: #fff; border: none;
+      border-radius: 10px; padding: 13px 26px;
+      font-size: 15px; font-weight: 600; font-family: 'Outfit', sans-serif;
+      text-decoration: none; cursor: pointer;
+      box-shadow: 0 0 28px rgba(10,124,248,0.4);
+      transition: all .2s; display: inline-block;
+    }
+    .btn-p:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(10,124,248,0.6); }
+    .btn-g {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 13px 26px; font-size: 15px; font-weight: 500;
+      font-family: 'Outfit', sans-serif; text-decoration: none;
+      cursor: pointer; transition: all .2s; display: inline-block;
+    }
+    .btn-g:hover { border-color: rgba(255,255,255,.22); transform: translateY(-2px); }
+
+    /* Scroll hint */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      z-index: 1;
+    }
+    .scroll-hint span { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+    .scroll-arrow {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--blue), transparent);
+      animation: scroll-drop 1.8s ease-in-out infinite;
+    }
+    @keyframes scroll-drop {
+      0%   { opacity: 0; transform: scaleY(0); transform-origin: top; }
+      50%  { opacity: 1; }
+      100% { opacity: 0; transform: scaleY(1); transform-origin: top; }
+    }
+
+    /* ── Sections 1–4: feature bg tints ───────────────────── */
+    #s1 { background: radial-gradient(ellipse 70% 60% at 70% 50%, rgba(10,124,248,0.06) 0%, transparent 70%), var(--bg); }
+    #s2 { background: radial-gradient(ellipse 70% 60% at 30% 50%, rgba(0,212,255,0.05) 0%, transparent 70%), var(--bg2); }
+    #s3 { background: radial-gradient(ellipse 70% 60% at 70% 50%, rgba(201,147,10,0.08) 0%, transparent 70%), var(--bg); }
+    #s4 { background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(0,230,118,0.05) 0%, transparent 70%), var(--bg2); }
+    #s5 { background: var(--bg); }
+
+    /* ── Decorative circuit lines ──────────────────────────── */
+    .circuit-lines {
+      position: absolute; inset: 0;
+      pointer-events: none; overflow: hidden;
+      opacity: .04; z-index: 0;
+    }
+    .circuit-lines svg { width: 100%; height: 100%; }
+
+    /* ── Section 4: before/after ───────────────────────────── */
+    .ba-wrap {
+      display: flex; gap: 20px; align-items: stretch;
+      width: 100%;
+    }
+    .ba-panel {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px 20px;
+      position: relative; overflow: hidden;
+    }
+    .ba-panel.after {
+      border-color: rgba(0,230,118,0.25);
+      background: rgba(0,230,118,0.03);
+      box-shadow: 0 0 40px rgba(0,230,118,0.06);
+    }
+    .ba-panel.after::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+    }
+    .ba-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 16px;
+    }
+    .ba-panel.after .ba-label { color: var(--green); }
+    .ba-metric { margin-bottom: 14px; }
+    .ba-metric-name { font-size: 11px; color: var(--dim); margin-bottom: 5px; font-family: 'JetBrains Mono', monospace; }
+    .ba-metric-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px; line-height: 1; color: var(--mid);
+    }
+    .ba-panel.after .ba-metric-val { color: var(--green); }
+    .ba-arrow {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 4px; flex-shrink: 0;
+      font-size: 28px; color: var(--dim);
+    }
+
+    /* ── Section 5: pricing ────────────────────────────────── */
+    .price-grid-sc {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 20px; max-width: 700px; width: 100%;
+    }
+    .price-card-sc {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 18px; padding: 36px 30px;
+      position: relative;
+    }
+    .price-card-sc.feat {
+      border-color: rgba(201,147,10,0.35);
+      background: linear-gradient(145deg, #0c1018, #0f1508);
+      box-shadow: 0 0 60px rgba(201,147,10,0.1);
+    }
+    .price-card-sc.feat::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    }
+    .price-tag-sc {
+      position: absolute; top: -12px; left: 24px;
+      background: linear-gradient(90deg, var(--amber), var(--amber2));
+      color: #000; font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700;
+      padding: 3px 12px; border-radius: 5px; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .price-tier-sc {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 12px;
+    }
+    .price-card-sc.feat .price-tier-sc { color: var(--amber); }
+    .price-amt-sc {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 64px; line-height: 1; letter-spacing: -1px;
+    }
+    .price-amt-sc sup { font-size: 26px; font-family: 'Outfit', sans-serif; font-weight: 300; vertical-align: super; }
+    .price-per-sc { font-size: 11px; color: var(--dim); margin-top: 6px; margin-bottom: 22px; font-family: 'JetBrains Mono', monospace; }
+    .price-line-sc { height: 1px; background: var(--border); margin-bottom: 20px; }
+    .price-list-sc { list-style: none; margin-bottom: 28px; }
+    .price-list-sc li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--mid); padding: 5px 0; font-weight: 300; }
+    .chk { width: 14px; height: 14px; flex-shrink: 0; }
+    .chk-b { color: var(--blue); }
+    .chk-a { color: var(--amber2); }
+    .btn-price {
+      display: block; width: 100%; padding: 13px; border-radius: 10px;
+      font-size: 14px; font-weight: 600; font-family: 'Outfit', sans-serif;
+      border: none; cursor: pointer; text-align: center; text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-price.blue { background: var(--blue); color: #fff; box-shadow: 0 0 24px rgba(10,124,248,0.35); }
+    .btn-price.blue:hover { opacity: .88; }
+    .btn-price.amber { background: linear-gradient(90deg, var(--amber), var(--amber2)); color: #000; box-shadow: 0 0 24px rgba(201,147,10,0.35); }
+    .btn-price.amber:hover { opacity: .9; }
+    .price-footer-txt {
+      text-align: center; margin-top: 20px;
+      font-size: 12px; color: var(--dim); font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── GSAP initial states ───────────────────────────────── */
+    .anim-left  { opacity: 0; transform: translateX(-50px); }
+    .anim-right { opacity: 0; transform: translateX(50px); }
+    .anim-up    { opacity: 0; transform: translateY(30px); }
+    .anim-scale { opacity: 0; transform: scale(.94); }
+  </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div id="progress-bar"></div>
+
+<!-- Nav -->
+<nav>
+  <a href="index.html" class="brand">
+    <img src="logo.png" alt="TuneProGM">
+    <span class="brand-name">Tune<span>Pro</span>GM</span>
+  </a>
+  <a href="#" class="nav-cta" onclick="scrollTo(5)">Probar gratis</a>
+</nav>
+
+<!-- Nav dots -->
+<div id="nav-dots">
+  <div class="dot active" data-section="0" data-label="Inicio" onclick="scrollTo(0)"></div>
+  <div class="dot" data-section="1" data-label="FPS" onclick="scrollTo(1)"></div>
+  <div class="dot" data-section="2" data-label="Red" onclick="scrollTo(2)"></div>
+  <div class="dot" data-section="3" data-label="PRO+" onclick="scrollTo(3)"></div>
+  <div class="dot" data-section="4" data-label="Reversible" onclick="scrollTo(4)"></div>
+  <div class="dot" data-section="5" data-label="Precios" onclick="scrollTo(5)"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- S0: Hero                                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="scroll-container">
+<section class="snap-section" id="s0">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow anim-up">
+        <div class="hero-dot"></div>
+        <span>Para Windows 10 / 11</span>
+      </div>
+      <h1 class="hero-title anim-left">
+        TUNE<br>
+        <span class="hi">PRO</span><br>
+        <span class="gm">GM</span>
+      </h1>
+      <p class="hero-sub anim-left">Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.</p>
+      <div class="hero-btns anim-up">
+        <a href="#" class="btn-p" onclick="scrollTo(5)">Probar gratis 3 días</a>
+        <a href="#" class="btn-g" onclick="scrollTo(1)">Ver características ↓</a>
+      </div>
+    </div>
+    <div class="mockup-outer anim-right">
+      <div class="mockup-box">
+        <div class="mock-header">
+          <div class="mock-logo"><div class="mock-dot"></div> TuneProGM</div>
+          <div class="mock-badge">PRO+ ACTIVO</div>
+        </div>
+        <div class="mock-cards">
+          <div class="mock-card glow-blue"><div class="mc-lbl">CPU</div><div class="mc-val">Ultimate</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">Timer</div><div class="mc-val">0.5ms</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">GPU</div><div class="mc-val">Prio 8</div></div>
+          <div class="mock-card glow-amber"><div class="mc-lbl">Spectre</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-amber"><div class="mc-lbl">Defender</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">Mouse</div><div class="mc-val">1:1</div></div>
+        </div>
+        <div>
+          <div class="mock-bar-row"><div class="mock-bl">FPS</div><div class="mock-bt"><div class="mock-bf b" style="width:78%"></div></div><div class="mock-bv">+28%</div></div>
+          <div class="mock-bar-row"><div class="mock-bl">Latencia</div><div class="mock-bt"><div class="mock-bf a" style="width:62%"></div></div><div class="mock-bv a">-42%</div></div>
+        </div>
+        <div class="mock-footer"><span>v1.0 · Reversible</span><span class="mock-status-dot">● Activo</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- S1: +FPS                                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="snap-section" id="s1">
+  <div class="circuit-lines">
+    <svg viewBox="0 0 1200 800" fill="none" preserveAspectRatio="xMidYMid slice">
+      <path d="M0 400 H200 V200 H500 V400 H800 V150 H1200" stroke="#0a7cf8" stroke-width="1"/>
+      <path d="M0 600 H300 V500 H600 V600 H900 V450 H1200" stroke="#0a7cf8" stroke-width=".6"/>
+      <circle cx="200" cy="200" r="4" fill="#0a7cf8"/>
+      <circle cx="500" cy="400" r="4" fill="#0a7cf8"/>
+      <circle cx="800" cy="150" r="4" fill="#0a7cf8"/>
+    </svg>
+  </div>
+  <div class="section-inner">
+    <!-- LEFT: text -->
+    <div>
+      <div class="sec-eyebrow anim-left">Rendimiento</div>
+      <h2 class="sec-title anim-left">MÁS <span class="hi">FPS.</span><br>SIEMPRE.</h2>
+      <p class="sec-desc anim-left">
+        TuneProGM activa el plan de energía <strong>Ultimate Performance</strong>, reduce el timer del sistema a <strong>0.5ms</strong> y le da a tu juego prioridad máxima de GPU. El resultado: más frames, más estables.
+      </p>
+      <div class="anim-up">
+        <div class="sec-stat" id="fps-counter">+30%</div>
+        <div class="sec-stat-label">FPS promedio en juegos</div>
+      </div>
+    </div>
+    <!-- RIGHT: mockup -->
+    <div class="mockup-outer anim-right">
+      <div class="mockup-box">
+        <div class="mock-header">
+          <div class="mock-logo"><div class="mock-dot"></div> TuneProGM</div>
+          <div class="mock-badge">MODO PRO</div>
+        </div>
+        <div class="mock-cards">
+          <div class="mock-card glow-blue"><div class="mc-lbl">CPU</div><div class="mc-val">Ultimate</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">Timer</div><div class="mc-val">0.5ms</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">GPU</div><div class="mc-val">Prio 8</div></div>
+          <div class="mock-card"><div class="mc-lbl">RAM</div><div class="mc-val">Auto</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">I/O</div><div class="mc-val">HIGH</div></div>
+          <div class="mock-card"><div class="mc-lbl">SVC</div><div class="mc-val">OFF</div></div>
+        </div>
+        <div>
+          <div class="mock-bar-row"><div class="mock-bl">FPS</div><div class="mock-bt"><div class="mock-bf b s1-bar" data-w="78"></div></div><div class="mock-bv">+28%</div></div>
+          <div class="mock-bar-row"><div class="mock-bl">Frame time</div><div class="mock-bt"><div class="mock-bf b s1-bar" data-w="55"></div></div><div class="mock-bv">-22%</div></div>
+          <div class="mock-bar-row"><div class="mock-bl">CPU load</div><div class="mock-bt"><div class="mock-bf b s1-bar" data-w="40"></div></div><div class="mock-bv">-18%</div></div>
+        </div>
+        <div class="mock-footer"><span>CPU · Timer · GPU Priority</span><span class="mock-status-dot">● Activo</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- S2: Red / Latencia                                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="snap-section" id="s2">
+  <div class="circuit-lines">
+    <svg viewBox="0 0 1200 800" fill="none" preserveAspectRatio="xMidYMid slice">
+      <path d="M1200 300 H900 V500 H600 V300 H300 V550 H0" stroke="#00d4ff" stroke-width="1"/>
+      <path d="M1200 600 H800 V400 H500 V600 H200 V350 H0" stroke="#00d4ff" stroke-width=".6"/>
+      <circle cx="900" cy="300" r="4" fill="#00d4ff"/>
+      <circle cx="600" cy="500" r="4" fill="#00d4ff"/>
+    </svg>
+  </div>
+  <div class="section-inner reverse">
+    <!-- RIGHT (becomes left visually) -->
+    <div>
+      <div class="sec-eyebrow anim-right">Red & Input</div>
+      <h2 class="sec-title anim-right">INPUT LAG<br><span class="hi">&lt;5MS.</span></h2>
+      <p class="sec-desc anim-right">
+        Elimina el throttling de red de Windows, desactiva el algoritmo Nagle y configura DNS Cloudflare. Cada paquete llega más rápido. Cada click se registra antes.
+      </p>
+      <div class="anim-up">
+        <div class="sec-stat" id="lag-counter">&lt;5ms</div>
+        <div class="sec-stat-label">Input lag con optimización activa</div>
+      </div>
+    </div>
+    <!-- LEFT (becomes right visually) -->
+    <div class="mockup-outer anim-left">
+      <div class="mockup-box">
+        <div class="mock-header">
+          <div class="mock-logo"><div class="mock-dot"></div> TuneProGM</div>
+          <div class="mock-badge">RED OPTIMIZADA</div>
+        </div>
+        <div class="mock-cards">
+          <div class="mock-card glow-blue"><div class="mc-lbl">Red</div><div class="mc-val">Sin lim.</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">Nagle</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">DNS</div><div class="mc-val">1.1.1.1</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">IPv6</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">FSO</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-blue"><div class="mc-lbl">Mouse</div><div class="mc-val">1:1</div></div>
+        </div>
+        <div>
+          <div class="mock-bar-row"><div class="mock-bl">Ping</div><div class="mock-bt"><div class="mock-bf b s2-bar" data-w="72"></div></div><div class="mock-bv">-35%</div></div>
+          <div class="mock-bar-row"><div class="mock-bl">Input lag</div><div class="mock-bt"><div class="mock-bf b s2-bar" data-w="62"></div></div><div class="mock-bv">-42%</div></div>
+        </div>
+        <div class="mock-footer"><span>Network · DNS · Mouse 1:1</span><span class="mock-status-dot">● Activo</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- S3: PRO+                                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="snap-section" id="s3">
+  <div class="circuit-lines" style="opacity:.06">
+    <svg viewBox="0 0 1200 800" fill="none" preserveAspectRatio="xMidYMid slice">
+      <path d="M0 400 H250 V200 H550 V400 H750 V100 H1200" stroke="#c9930a" stroke-width="1"/>
+      <circle cx="250" cy="200" r="5" fill="#c9930a"/>
+      <circle cx="550" cy="400" r="5" fill="#c9930a"/>
+      <circle cx="750" cy="100" r="5" fill="#c9930a"/>
+    </svg>
+  </div>
+  <div class="section-inner">
+    <div>
+      <div class="sec-eyebrow amber anim-left">PRO+ Exclusivo</div>
+      <h2 class="sec-title anim-left">SIN<br>LÍMITES<br><span class="hi-amber">PRO+.</span></h2>
+      <p class="sec-desc anim-left">
+        Desactiva las mitigaciones de <strong>Spectre/Meltdown</strong> y <strong>Windows Defender</strong> mientras jugás. Operaciones que Windows bloquea por seguridad — vos decidís cuándo activarlas.
+      </p>
+      <div class="anim-up" style="display:flex;gap:28px">
+        <div>
+          <div class="sec-stat amber" style="font-size:64px">Spectre</div>
+          <div class="sec-stat-label">OFF durante el juego</div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-outer anim-right">
+      <div class="mockup-box amber-theme">
+        <div class="mock-header">
+          <div class="mock-logo"><div class="mock-dot amber"></div> TuneProGM</div>
+          <div class="mock-badge amber">PRO+ ACTIVO</div>
+        </div>
+        <div class="mock-cards">
+          <div class="mock-card"><div class="mc-lbl">CPU</div><div class="mc-val" style="color:var(--amber2)">Ultimate</div></div>
+          <div class="mock-card"><div class="mc-lbl">Timer</div><div class="mc-val" style="color:var(--amber2)">0.5ms</div></div>
+          <div class="mock-card"><div class="mc-lbl">GPU</div><div class="mc-val" style="color:var(--amber2)">Prio 8</div></div>
+          <div class="mock-card glow-amber"><div class="mc-lbl">Spectre</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-amber"><div class="mc-lbl">Defender</div><div class="mc-val">OFF</div></div>
+          <div class="mock-card glow-amber"><div class="mc-lbl">Killer</div><div class="mc-val">ON</div></div>
+        </div>
+        <div>
+          <div class="mock-bar-row"><div class="mock-bl">FPS</div><div class="mock-bt"><div class="mock-bf a s3-bar" data-w="85"></div></div><div class="mock-bv a">+34%</div></div>
+          <div class="mock-bar-row"><div class="mock-bl">CPU free</div><div class="mock-bt"><div class="mock-bf a s3-bar" data-w="70"></div></div><div class="mock-bv a">+28%</div></div>
+        </div>
+        <div class="mock-footer"><span>Spectre · Defender · Process Killer</span><span class="mock-status-dot amber">● PRO+</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- S4: 100% Reversible                                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="snap-section" id="s4">
+  <div class="section-inner center">
+    <div style="max-width:800px;width:100%">
+      <div class="sec-eyebrow green anim-up" style="justify-content:center">Seguridad</div>
+      <h2 class="sec-title anim-up" style="text-align:center;font-size:clamp(48px,6vw,80px)">
+        <span class="hi-green">100%</span> REVERSIBLE.<br>UN CLICK.
+      </h2>
+      <p class="sec-desc anim-up" style="text-align:center;margin:0 auto 36px">
+        Al presionar el botón, todo vuelve exactamente a como estaba. Sin cambios permanentes en el registro. Sin sorpresas.
+      </p>
+      <div class="ba-wrap anim-scale" id="ba-wrap">
+        <div class="ba-panel">
+          <div class="ba-label">ANTES</div>
+          <div class="ba-metric"><div class="ba-metric-name">FPS promedio</div><div class="ba-metric-val" id="ba-fps-before">94</div></div>
+          <div class="ba-metric"><div class="ba-metric-name">Input lag</div><div class="ba-metric-val">12ms</div></div>
+          <div class="ba-metric"><div class="ba-metric-name">Timer</div><div class="ba-metric-val">15.6ms</div></div>
+        </div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-panel after">
+          <div class="ba-label">DESPUÉS</div>
+          <div class="ba-metric"><div class="ba-metric-name">FPS promedio</div><div class="ba-metric-val" id="ba-fps-after">121</div></div>
+          <div class="ba-metric"><div class="ba-metric-name">Input lag</div><div class="ba-metric-val">&lt;5ms</div></div>
+          <div class="ba-metric"><div class="ba-metric-name">Timer</div><div class="ba-metric-val">0.5ms</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- S5: Precios                                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="snap-section" id="s5">
+  <div class="section-inner center">
+    <div style="max-width:800px;width:100%">
+      <div class="sec-eyebrow anim-up" style="justify-content:center">Planes</div>
+      <h2 class="sec-title anim-up" style="text-align:center;font-size:clamp(40px,5vw,68px);margin-bottom:8px">SIN SUSCRIPCIONES.</h2>
+      <p style="font-size:14px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:36px;text-align:center" class="anim-up">Probá 3 días gratis · Sin tarjeta · Sin compromiso</p>
+      <div class="price-grid-sc anim-scale">
+        <div class="price-card-sc">
+          <div class="price-tier-sc">PRO</div>
+          <div class="price-amt-sc"><sup>$</sup>9</div>
+          <div class="price-per-sc">pago único · para siempre</div>
+          <div class="price-line-sc"></div>
+          <ul class="price-list-sc">
+            <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Optimización completa</li>
+            <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> +30% FPS · &lt;5ms lag</li>
+            <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 100% reversible</li>
+            <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 4 idiomas</li>
+          </ul>
+          <a href="#" class="btn-price blue">Probar 3 días gratis</a>
+        </div>
+        <div class="price-card-sc feat">
+          <div class="price-tag-sc">PRO+</div>
+          <div class="price-tier-sc">PRO+</div>
+          <div class="price-amt-sc"><sup>$</sup>14</div>
+          <div class="price-per-sc">pago único · para siempre</div>
+          <div class="price-line-sc"></div>
+          <ul class="price-list-sc">
+            <li><svg class="chk chk-a" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Todo lo de PRO</li>
+            <li><svg class="chk chk-a" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Spectre / Meltdown OFF</li>
+            <li><svg class="chk chk-a" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Defender OFF en gaming</li>
+            <li><svg class="chk chk-a" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Process Killer</li>
+          </ul>
+          <a href="#" class="btn-price amber">Comprar PRO+</a>
+        </div>
+      </div>
+      <p class="price-footer-txt anim-up">© 2025 TuneProGM — Todos los derechos reservados</p>
+    </div>
+  </div>
+</section>
+</div><!-- /scroll-container -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+// ── Scroll helper ─────────────────────────────────────────────────────────────
+const sections = Array.from(document.querySelectorAll('.snap-section'));
+const container = document.getElementById('scroll-container');
+const dots = document.querySelectorAll('.dot');
+let currentSection = 0;
+
+function scrollTo(idx) {
+  sections[idx].scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Progress bar + dot update ─────────────────────────────────────────────────
+const progressBar = document.getElementById('progress-bar');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const idx = sections.indexOf(entry.target);
+    if (idx === -1) return;
+    currentSection = idx;
+
+    // Dots
+    dots.forEach((d, i) => {
+      d.classList.remove('active', 'active-amber');
+      if (i === idx) d.classList.add(idx === 3 ? 'active-amber' : 'active');
+    });
+
+    // Progress
+    progressBar.style.width = ((idx / (sections.length - 1)) * 100) + '%';
+    progressBar.style.background = idx === 3
+      ? 'linear-gradient(90deg, var(--amber), var(--amber2))'
+      : 'linear-gradient(90deg, var(--blue), var(--cyan))';
+
+    // Run section animation
+    animateSection(idx);
+  });
+}, { threshold: 0.55, root: container });
+
+sections.forEach(s => observer.observe(s));
+
+// ── GSAP section animations ───────────────────────────────────────────────────
+const animated = new Set();
+
+function animateSection(idx) {
+  if (animated.has(idx)) return;
+  animated.add(idx);
+
+  const section = sections[idx];
+  const lefts   = section.querySelectorAll('.anim-left');
+  const rights  = section.querySelectorAll('.anim-right');
+  const ups     = section.querySelectorAll('.anim-up');
+  const scales  = section.querySelectorAll('.anim-scale');
+
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' }});
+
+  if (lefts.length)  tl.to(lefts,  { opacity:1, x:0, duration:.7, stagger:.12 }, 0);
+  if (rights.length) tl.to(rights, { opacity:1, x:0, duration:.7, stagger:.12 }, 0.08);
+  if (ups.length)    tl.to(ups,    { opacity:1, y:0, duration:.65, stagger:.1 }, 0.15);
+  if (scales.length) tl.to(scales, { opacity:1, scale:1, duration:.65 }, 0.2);
+
+  // Animate bars in section
+  const bars = section.querySelectorAll('[data-w]');
+  bars.forEach(b => {
+    tl.to(b, { width: b.dataset.w + '%', duration: 1.2, ease: 'power2.out' }, 0.5);
+  });
+}
+
+// Animate hero immediately
+animateSection(0);
+
+// ── Three.js Hero background ──────────────────────────────────────────────────
+const canvas = document.getElementById('hero-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(0, 0, 10);
+
+// Grid
+const gridGeo = new THREE.PlaneGeometry(60, 60, 28, 28);
+const gridMat = new THREE.MeshBasicMaterial({ color: 0x0a7cf8, wireframe: true, transparent: true, opacity: .025 });
+const gridMesh = new THREE.Mesh(gridGeo, gridMat);
+gridMesh.rotation.x = -Math.PI / 2.5;
+gridMesh.position.set(0, -5, -5);
+scene.add(gridMesh);
+
+// Nodes
+const nodeGrp = new THREE.Group();
+for (let i = 0; i < 50; i++) {
+  const x = (Math.random()-.5)*28, y = (Math.random()-.5)*14, z = (Math.random()-.5)*8-2;
+  const m = new THREE.Mesh(
+    new THREE.SphereGeometry(.04+Math.random()*.06,6,6),
+    new THREE.MeshBasicMaterial({ color: Math.random()>.7 ? 0xc9930a : 0x0a7cf8, transparent:true, opacity:.4+Math.random()*.4 })
+  );
+  m.position.set(x,y,z);
+  m.userData = { ox:x, oy:y, sp:.2+Math.random()*.4, ph:Math.random()*Math.PI*2 };
+  nodeGrp.add(m);
+}
+scene.add(nodeGrp);
+
+let mx=0, my=0, t=0;
+document.addEventListener('mousemove', e => {
+  mx = (e.clientX/innerWidth-.5)*2;
+  my = -(e.clientY/innerHeight-.5)*2;
+});
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+(function loop() {
+  requestAnimationFrame(loop);
+  // Only render when on hero
+  if (currentSection !== 0) return;
+  t += .008;
+  nodeGrp.children.forEach(n => {
+    n.position.y = n.userData.oy + Math.sin(t*n.userData.sp+n.userData.ph)*.5;
+    n.position.x = n.userData.ox + Math.cos(t*n.userData.sp*.7+n.userData.ph)*.25;
+  });
+  gridMesh.position.z = -5 + (t*.8)%2;
+  camera.position.x += (mx*.5-camera.position.x)*.04;
+  camera.position.y += (my*.3-camera.position.y)*.04;
+  camera.lookAt(0,0,0);
+  renderer.render(scene, camera);
+})();
+
+// ── Keyboard navigation ───────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') scrollTo(Math.min(currentSection+1, sections.length-1));
+  if (e.key === 'ArrowUp'   || e.key === 'PageUp')   scrollTo(Math.max(currentSection-1, 0));
+});
+</script>
+</body>
+</html>
