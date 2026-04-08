@@ -101,8 +101,11 @@
       color: var(--text);
     }
     .brand-logo {
-      width: 30px; height: 30px;
+      width: 32px; height: 32px;
       flex-shrink: 0;
+      border-radius: 8px;
+      object-fit: cover;
+      object-position: center;
     }
     .brand-name {
       font-family: 'Barlow Condensed', sans-serif;
@@ -743,32 +746,7 @@
 <!-- Nav -->
 <nav id="nav">
   <a href="#" class="brand">
-    <svg class="brand-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="10" fill="url(#bg-grad)"/>
-      <defs>
-        <linearGradient id="bg-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#0a1e3a"/>
-          <stop offset="100%" stop-color="#061220"/>
-        </linearGradient>
-        <linearGradient id="arc-grad" x1="8" y1="28" x2="32" y2="8" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#c9930a"/>
-          <stop offset="50%" stop-color="#0a7cf8"/>
-          <stop offset="100%" stop-color="#00d4ff"/>
-        </linearGradient>
-      </defs>
-      <!-- Speedometer arc -->
-      <path d="M9 28 A13 13 0 0 1 31 28" stroke="url(#arc-grad)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-      <!-- Tick marks -->
-      <line x1="9" y1="28" x2="10.8" y2="26.2" stroke="#c9930a" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
-      <line x1="20" y1="15" x2="20" y2="17.2" stroke="#0a7cf8" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
-      <line x1="31" y1="28" x2="29.2" y2="26.2" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
-      <!-- Needle -->
-      <line x1="20" y1="28" x2="25.5" y2="19" stroke="#0a7cf8" stroke-width="2" stroke-linecap="round"/>
-      <!-- Center dot -->
-      <circle cx="20" cy="28" r="2.5" fill="#0a7cf8"/>
-      <!-- Circuit trace bottom -->
-      <path d="M14 33 H20 M26 33 H20 M20 33 V31" stroke="rgba(10,124,248,0.4)" stroke-width="1" stroke-linecap="round"/>
-    </svg>
+    <img src="logo.png" alt="TuneProGM" class="brand-logo">
     <span class="brand-name">Tune<span>Pro</span>GM</span>
   </a>
   <div class="nav-right">
@@ -786,6 +764,7 @@
 <section>
   <div class="hero">
     <div class="hero-left">
+      <img src="logo.png" alt="TuneProGM" class="hero-logo rev rev-left" style="width:88px;height:88px;object-fit:cover;object-position:center;border-radius:20px;margin-bottom:24px;box-shadow:0 0 40px rgba(201,147,10,0.3),0 0 80px rgba(10,124,248,0.15);">
       <div class="hero-badge rev rev-left">
         <div class="hero-badge-dot"></div>
         <span data-i18n="hero_badge">Para Windows 10 / 11</span>
@@ -1134,11 +1113,7 @@
 
 <footer>
   <div class="footer-brand">
-    <svg viewBox="0 0 40 40" fill="none">
-      <path d="M9 28 A13 13 0 0 1 31 28" stroke="#0a7cf8" stroke-width="2" stroke-linecap="round" fill="none" opacity=".6"/>
-      <line x1="20" y1="28" x2="25.5" y2="19" stroke="#0a7cf8" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>
-      <circle cx="20" cy="28" r="2" fill="#0a7cf8" opacity=".6"/>
-    </svg>
+    <img src="logo.png" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:6px;">
     <span>TuneProGM</span>
   </div>
   <p>© 2025 TuneProGM &nbsp;·&nbsp; <span data-i18n="fr">Todos los derechos reservados</span></p>
