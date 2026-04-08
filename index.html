@@ -3,34 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TuneProGM — Optimizer for Gamers</title>
+  <title>TuneProGM — PC Optimizer for Gamers</title>
   <meta name="description" content="Optimizador de PC para gaming. Más FPS, menos latencia, sin complicaciones.">
   <link rel="icon" href="icon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #030508;
-      --blue:      #0a7cf8;
-      --blue-dim:  rgba(10,124,248,0.12);
-      --green:     #00e676;
-      --green-dim: rgba(0,230,118,0.10);
-      --text:      #eeeef2;
-      --mid:       #9898a8;
-      --dim:       #72728a;
-      --border:    rgba(255,255,255,0.07);
-      --card:      rgba(255,255,255,0.032);
+      --bg:     #03080f;
+      --bg2:    #060d1a;
+      --bg3:    #0a1424;
+      --blue:   #0a7cf8;
+      --blue2:  #1e90ff;
+      --amber:  #c9930a;
+      --amber2: #f0b429;
+      --cyan:   #00d4ff;
+      --text:   #e4e8f0;
+      --mid:    #7a8ba0;
+      --dim:    #3d4f62;
+      --border: rgba(255,255,255,0.06);
+      --bblue:  rgba(10,124,248,0.15);
+      --bamber: rgba(201,147,10,0.15);
     }
-
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior: smooth; }
-
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Outfit', system-ui, sans-serif;
+      font-weight: 400;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Canvas 3D ─────────────────────────────────────────── */
     #canvas-bg {
       position: fixed;
       inset: 0;
@@ -38,589 +45,731 @@
       pointer-events: none;
     }
 
-    /* ── Nav ─────────────────────────────────────────────── */
+    /* ── Custom cursor ─────────────────────────────────────── */
+    .cursor {
+      position: fixed;
+      width: 8px; height: 8px;
+      background: var(--blue);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width .15s, height .15s, background .15s;
+      mix-blend-mode: screen;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 32px; height: 32px;
+      border: 1px solid rgba(10,124,248,0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: width .3s ease, height .3s ease, transform .08s, border-color .3s;
+    }
+    body:has(a:hover) .cursor, body:has(button:hover) .cursor {
+      width: 14px; height: 14px;
+      background: var(--amber);
+    }
+    body:has(a:hover) .cursor-ring, body:has(button:hover) .cursor-ring {
+      width: 48px; height: 48px;
+      border-color: rgba(201,147,10,0.5);
+    }
+
+    /* ── Nav ───────────────────────────────────────────────── */
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
-      z-index: 200;
-      height: 58px;
+      z-index: 500;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 48px;
-      background: rgba(3,5,8,0.78);
-      backdrop-filter: blur(28px) saturate(160%);
-      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      padding: 0 52px;
+      background: rgba(3,8,15,0.7);
+      backdrop-filter: blur(24px) saturate(180%);
       border-bottom: 1px solid var(--border);
+      transition: background .3s;
     }
+    nav.scrolled { background: rgba(3,8,15,0.92); }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 11px;
       text-decoration: none;
       color: var(--text);
     }
-
-    .brand img {
-      width: 26px;
-      height: 26px;
-      object-fit: contain;
-      border-radius: 6px;
+    .brand-logo {
+      width: 30px; height: 30px;
+      flex-shrink: 0;
     }
-
     .brand-name {
-      font-size: 15px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px;
       font-weight: 700;
-      letter-spacing: -0.2px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
+    .brand-name span { color: var(--blue); }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
 
     .lang-switcher {
       display: flex;
       gap: 1px;
-      background: rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.04);
       border: 1px solid var(--border);
-      border-radius: 7px;
+      border-radius: 8px;
       padding: 3px;
     }
-
     .lang-btn {
-      background: none;
-      border: none;
+      background: none; border: none;
       color: var(--dim);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 7px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: inherit;
-      letter-spacing: 0.4px;
-      transition: all 0.18s;
+      font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 5px;
+      cursor: pointer; font-family: 'Barlow Condensed', sans-serif;
+      letter-spacing: 1px; text-transform: uppercase;
+      transition: all .18s;
     }
-
-    .lang-btn.active {
-      background: rgba(255,255,255,0.11);
-      color: var(--text);
-    }
+    .lang-btn.active { background: rgba(10,124,248,0.18); color: var(--blue); }
+    .lang-btn:hover:not(.active) { color: var(--text); }
 
     .btn-nav {
       background: var(--blue);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 7px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      text-decoration: none;
-      letter-spacing: -0.1px;
-      transition: opacity 0.2s;
+      color: #fff; border: none;
+      border-radius: 8px; padding: 8px 18px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: 'Outfit', sans-serif;
+      text-decoration: none; letter-spacing: -.1px;
+      transition: all .2s;
+      box-shadow: 0 0 20px rgba(10,124,248,0.35);
     }
+    .btn-nav:hover { opacity: .88; box-shadow: 0 0 28px rgba(10,124,248,0.55); transform: translateY(-1px); }
 
-    .btn-nav:hover { opacity: 0.85; }
-
-    /* ── Hero ────────────────────────────────────────────── */
-    .hero-wrap {
+    /* ── Hero ──────────────────────────────────────────────── */
+    .hero {
       position: relative;
       z-index: 1;
       min-height: 100vh;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       align-items: center;
-      padding: 58px 48px 0;
-      max-width: 1100px;
+      gap: 40px;
+      max-width: 1160px;
       margin: 0 auto;
+      padding: 100px 52px 60px;
     }
 
-    .hero-content { max-width: 560px; }
+    .hero-left { position: relative; }
 
-    .eyebrow {
+    .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.8px;
-      text-transform: uppercase;
-      color: var(--green);
-      margin-bottom: 32px;
+      background: rgba(10,124,248,0.1);
+      border: 1px solid rgba(10,124,248,0.25);
+      border-radius: 100px;
+      padding: 6px 14px;
+      margin-bottom: 28px;
     }
-
-    .eyebrow-dot {
+    .hero-badge-dot {
       width: 6px; height: 6px;
+      background: var(--blue);
       border-radius: 50%;
-      background: var(--green);
-      animation: blink 2.4s ease-in-out infinite;
+      animation: pulse-dot 2s infinite;
     }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.3; }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(10,124,248,.5); }
+      50%       { box-shadow: 0 0 0 5px rgba(10,124,248,0); }
     }
-
-    .hero-brand-row {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-
-    .hero-icon {
-      width: 76px;
-      height: 76px;
-      object-fit: contain;
-      border-radius: 18px;
-      filter: drop-shadow(0 0 28px rgba(0,230,118,0.35)) drop-shadow(0 0 56px rgba(10,124,248,0.2));
+    .hero-badge span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--blue);
+      letter-spacing: .5px;
     }
 
     .hero-title {
-      font-size: clamp(54px, 8.5vw, 90px);
-      font-weight: 800;
-      letter-spacing: -3.5px;
-      line-height: 0.92;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 10vw, 118px);
+      line-height: .9;
+      letter-spacing: 2px;
       color: var(--text);
+      margin-bottom: 24px;
     }
-
-    .hero-title .hi {
-      background: linear-gradient(130deg, var(--green) 0%, #00c4ff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .hero-title .word-pro {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--blue);
+      position: relative;
     }
+    .hero-title .word-pro::after {
+      content: 'PRO';
+      position: absolute;
+      inset: 0;
+      color: var(--blue);
+      filter: blur(18px);
+      opacity: .35;
+    }
+    .hero-title .word-gm { color: var(--amber); }
 
     .hero-sub {
-      font-size: 18px;
+      font-size: 17px;
       color: var(--mid);
-      line-height: 1.62;
+      line-height: 1.7;
       max-width: 420px;
-      margin-top: 18px;
-      font-weight: 400;
+      margin-bottom: 40px;
+      font-weight: 300;
     }
 
-    .hero-btns {
-      display: flex;
-      gap: 12px;
-      margin-top: 40px;
-      flex-wrap: wrap;
-    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
 
     .btn-primary {
       background: var(--blue);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 13px 26px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      text-decoration: none;
-      display: inline-block;
-      letter-spacing: -0.2px;
-      transition: opacity 0.2s, transform 0.2s;
+      color: #fff; border: none;
+      border-radius: 10px; padding: 14px 28px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: 'Outfit', sans-serif;
+      text-decoration: none; display: inline-flex;
+      align-items: center; gap: 8px;
+      letter-spacing: -.1px;
+      transition: all .22s;
+      box-shadow: 0 0 28px rgba(10,124,248,0.4);
     }
-
-    .btn-primary:hover { opacity: 0.87; transform: translateY(-1px); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(10,124,248,0.65); }
 
     .btn-ghost {
       background: transparent;
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 13px 26px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      text-decoration: none;
-      display: inline-block;
-      letter-spacing: -0.1px;
-      transition: border-color 0.2s, transform 0.2s;
+      border-radius: 10px; padding: 14px 28px;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer; font-family: 'Outfit', sans-serif;
+      text-decoration: none; display: inline-block;
+      transition: all .22s;
     }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.22); transform: translateY(-2px); }
 
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.22); transform: translateY(-1px); }
-
-    /* ── Stats strip ─────────────────────────────────────── */
-    .stats {
-      position: relative;
-      z-index: 1;
+    /* ── Hero right: 3D app mockup ─────────────────────────── */
+    .hero-right {
+      perspective: 900px;
       display: flex;
       justify-content: center;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      background: rgba(3,5,8,0.65);
-      backdrop-filter: blur(12px);
+      align-items: center;
     }
 
-    .stat {
+    .mockup-wrap {
+      transform: rotateY(-15deg) rotateX(5deg);
+      transform-style: preserve-3d;
+      animation: float3d 6s ease-in-out infinite;
+      will-change: transform;
+    }
+    @keyframes float3d {
+      0%,100% { transform: rotateY(-15deg) rotateX(5deg) translateY(0); }
+      50%      { transform: rotateY(-12deg) rotateX(3deg) translateY(-14px); }
+    }
+    .hero-right:hover .mockup-wrap {
+      animation-play-state: paused;
+      transition: transform .6s ease;
+    }
+
+    .mockup {
+      width: 340px;
+      background: linear-gradient(145deg, #0a1525, #060f1c);
+      border: 1px solid rgba(10,124,248,0.25);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow:
+        0 0 0 1px rgba(10,124,248,0.08),
+        0 40px 80px rgba(0,0,0,0.8),
+        0 0 60px rgba(10,124,248,0.12),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .mockup::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(10,124,248,0.6), transparent);
+    }
+
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup-logo {
+      display: flex; align-items: center; gap: 7px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; font-weight: 700; letter-spacing: 1px;
+    }
+    .mockup-logo-dot { width: 8px; height: 8px; background: var(--blue); border-radius: 50%; box-shadow: 0 0 8px var(--blue); }
+    .mockup-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 500;
+      background: rgba(201,147,10,0.15);
+      border: 1px solid rgba(201,147,10,0.35);
+      color: var(--amber2);
+      padding: 2px 8px; border-radius: 4px; letter-spacing: .5px;
+    }
+
+    .mockup-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .mockup-card {
+      background: rgba(10,124,248,0.06);
+      border: 1px solid rgba(10,124,248,0.12);
+      border-radius: 7px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .mockup-card.gold {
+      background: rgba(201,147,10,0.08);
+      border-color: rgba(201,147,10,0.2);
+    }
+    .mockup-card-lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px;
+    }
+    .mockup-card-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; font-weight: 500;
+      color: var(--blue); margin-top: 3px;
+    }
+    .mockup-card.gold .mockup-card-val { color: var(--amber2); }
+
+    .mockup-bars { margin-bottom: 10px; }
+    .mockup-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .mockup-bar-lbl { font-size: 9px; color: var(--dim); width: 40px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+    .mockup-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+    .mockup-bar-fill { height: 100%; border-radius: 2px; }
+    .mockup-bar-fill.b { background: linear-gradient(90deg, var(--blue), var(--cyan)); width: 78%; }
+    .mockup-bar-fill.g { background: linear-gradient(90deg, var(--amber), var(--amber2)); width: 62%; }
+    .mockup-bar-fill.m { background: linear-gradient(90deg, var(--blue), var(--amber)); width: 45%; }
+    .mockup-bar-val { font-size: 9px; color: var(--blue); font-family: 'JetBrains Mono', monospace; width: 30px; text-align: right; }
+
+    .mockup-footer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; color: var(--dim);
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      display: flex; justify-content: space-between;
+    }
+    .mockup-status { color: var(--blue); }
+
+    /* ── Stats bar ─────────────────────────────────────────── */
+    .stats-bar {
+      position: relative; z-index: 1;
+      background: rgba(6,13,26,0.7);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+    }
+
+    .stat-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 28px 52px;
+      padding: 30px 60px;
       border-right: 1px solid var(--border);
+      position: relative;
     }
-
-    .stat:last-child { border-right: none; }
+    .stat-item:last-child { border-right: none; }
 
     .stat-val {
-      font-size: 38px;
-      font-weight: 800;
-      letter-spacing: -2px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 44px;
       line-height: 1;
-      color: var(--text);
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-
+    .stat-item:nth-child(3) .stat-val {
+      background: linear-gradient(135deg, var(--amber), var(--amber2));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
     .stat-lbl {
-      font-size: 11px;
-      color: var(--dim);
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      margin-top: 6px;
-      text-transform: uppercase;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--dim); margin-top: 6px;
     }
 
-    /* ── Section commons ─────────────────────────────────── */
+    /* ── Section commons ───────────────────────────────────── */
     section { position: relative; z-index: 1; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 52px; }
 
-    .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 48px;
+    .sec-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 16px;
     }
-
-    .sec-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 14px;
-    }
+    .sec-eyebrow.amber { color: var(--amber); }
 
     .sec-title {
-      font-size: clamp(28px, 4vw, 46px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      line-height: 1.08;
-      max-width: 520px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(30px, 4.5vw, 50px);
+      font-weight: 700;
+      letter-spacing: -.5px;
+      line-height: 1.05;
     }
-
     .sec-sub {
       font-size: 16px;
       color: var(--mid);
       margin-top: 14px;
       max-width: 460px;
-      line-height: 1.65;
+      line-height: 1.7;
+      font-weight: 300;
     }
 
-    /* ── Features ────────────────────────────────────────── */
-    .features-sec { padding: 120px 0; }
+    /* ── Reveal animations ─────────────────────────────────── */
+    .rev        { opacity: 0; transition: opacity .7s ease, transform .7s ease; }
+    .rev-left   { transform: translateX(-60px); }
+    .rev-right  { transform: translateX(60px); }
+    .rev-up     { transform: translateY(36px); }
+    .rev-scale  { transform: scale(.93); }
+    .rev.in     { opacity: 1 !important; transform: none !important; }
 
-    .feat-hdr { margin-bottom: 56px; }
+    .rev-d1 { transition-delay: .08s; }
+    .rev-d2 { transition-delay: .16s; }
+    .rev-d3 { transition-delay: .24s; }
+    .rev-d4 { transition-delay: .32s; }
+    .rev-d5 { transition-delay: .40s; }
+    .rev-d6 { transition-delay: .48s; }
+
+    /* ── Features ──────────────────────────────────────────── */
+    .feat-sec { padding: 120px 0; }
+
+    .feat-hdr { margin-bottom: 60px; }
 
     .feat-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      background: var(--border);
       gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
     }
 
     .feat-card {
-      background: var(--card);
-      padding: 32px 28px;
-      transition: background 0.25s;
+      background: var(--bg2);
+      padding: 36px 30px;
+      position: relative;
+      overflow: hidden;
+      transition: background .25s;
+      cursor: default;
+      /* 3D tilt via JS */
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .feat-card:hover { background: #0b1628; }
+
+    .feat-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(10,124,248,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .feat-card:hover::after { opacity: 1; }
+
+    .feat-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      background: rgba(10,124,248,0.1);
+      border: 1px solid rgba(10,124,248,0.2);
+      transition: box-shadow .3s;
+    }
+    .feat-icon.a {
+      background: rgba(201,147,10,0.1);
+      border-color: rgba(201,147,10,0.2);
+    }
+    .feat-card:hover .feat-icon { box-shadow: 0 0 20px rgba(10,124,248,0.3); }
+    .feat-card:hover .feat-icon.a { box-shadow: 0 0 20px rgba(201,147,10,0.3); }
+    .feat-icon svg { width: 20px; height: 20px; }
+
+    .feat-num {
+      position: absolute;
+      top: 18px; right: 22px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      color: rgba(255,255,255,0.025);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .feat-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px; font-weight: 600;
+      letter-spacing: .2px;
+      margin-bottom: 10px;
+    }
+    .feat-desc { font-size: 13.5px; color: var(--mid); line-height: 1.68; font-weight: 300; }
+
+    /* ── Performance ───────────────────────────────────────── */
+    .perf-sec { padding: 80px 0 120px; }
+
+    .perf-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 70px;
+      align-items: center;
+    }
+
+    .perf-copy .sec-title { max-width: 400px; }
+
+    .chart-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
       position: relative;
       overflow: hidden;
     }
-
-    .feat-card::before {
+    .chart-wrap::before {
       content: '';
       position: absolute;
-      bottom: 0; left: 0; right: 0;
+      top: 0; left: 0; right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--blue), transparent);
-      opacity: 0;
-      transition: opacity 0.3s;
+      background: linear-gradient(90deg, transparent, var(--blue), var(--amber), transparent);
     }
 
-    .feat-card:hover { background: rgba(255,255,255,0.055); }
-    .feat-card:hover::before { opacity: 1; }
-
-    .feat-icon {
-      width: 38px; height: 38px;
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 18px;
-      background: var(--blue-dim);
-      border: 1px solid rgba(10,124,248,0.18);
+    .chart-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 28px;
     }
 
-    .feat-icon.g {
-      background: var(--green-dim);
-      border-color: rgba(0,230,118,0.18);
-    }
-
-    .feat-icon svg { width: 18px; height: 18px; }
-
-    .feat-title {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      margin-bottom: 8px;
-    }
-
-    .feat-desc {
-      font-size: 13.5px;
-      color: var(--mid);
-      line-height: 1.65;
-    }
-
-    /* ── Performance ─────────────────────────────────────── */
-    .perf-sec { padding: 100px 0; }
-
-    .perf-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 56px;
-      align-items: center;
-    }
-
-    .perf-panel {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 30px;
-    }
-
-    .perf-panel-title {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin-bottom: 28px;
-    }
-
-    .bar-row { margin-bottom: 20px; }
-
+    .bar-row { margin-bottom: 22px; }
     .bar-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--mid);
-      margin-bottom: 7px;
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--mid);
+      margin-bottom: 8px;
+      font-family: 'Outfit', sans-serif;
     }
-
-    .bar-label span:last-child { color: var(--green); font-weight: 600; }
-
-    .bar-track {
-      height: 6px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 3px;
-      overflow: hidden;
+    .bar-label strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
     }
+    .bar-label strong.pos { color: var(--blue); }
+    .bar-label strong.neg { color: var(--amber); }
 
-    .bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      width: 0;
-      transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-    }
+    .bar-track { height: 5px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; width: 0; transition: width 1.4s cubic-bezier(.22,1,.36,1); }
+    .bar-fill.b { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .bar-fill.a { background: linear-gradient(90deg, var(--amber), var(--amber2)); }
+    .bar-fill.m { background: linear-gradient(90deg, var(--blue), var(--amber)); }
 
-    .bar-blue  { background: linear-gradient(90deg, var(--blue), #55aaff); }
-    .bar-green { background: linear-gradient(90deg, var(--green), #00c8ff); }
-    .bar-mix   { background: linear-gradient(90deg, var(--blue), var(--green)); }
+    /* ── Pricing ───────────────────────────────────────────── */
+    .price-sec { padding: 120px 0; }
 
-    .perf-copy h3 {
-      font-size: clamp(26px, 3.5vw, 40px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      line-height: 1.12;
-    }
-
-    .perf-copy p {
-      font-size: 15px;
-      color: var(--mid);
-      line-height: 1.68;
-      margin-top: 16px;
-    }
-
-    .perf-note {
-      font-size: 12px;
-      color: var(--dim);
-      margin-top: 12px;
-    }
-
-    /* ── Pricing ─────────────────────────────────────────── */
-    .pricing-sec { padding: 120px 0; }
-
-    .price-hdr { margin-bottom: 56px; }
+    .price-hdr { text-align: center; margin-bottom: 64px; }
+    .price-hdr .sec-sub { margin: 14px auto 0; }
 
     .price-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      max-width: 720px;
+      gap: 24px;
+      max-width: 760px;
+      margin: 0 auto;
     }
 
     .price-card {
-      background: var(--card);
+      background: var(--bg2);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 34px 30px;
+      border-radius: 18px;
+      padding: 38px 34px;
       position: relative;
+      transition: transform .3s, box-shadow .3s;
     }
+    .price-card:hover { transform: translateY(-4px); }
 
-    .price-card.pro-plus {
-      border-color: rgba(0,230,118,0.28);
-      background: rgba(0,230,118,0.035);
+    .price-card.featured {
+      border-color: rgba(201,147,10,0.35);
+      background: linear-gradient(145deg, #0c1018, #0f1508);
+      box-shadow: 0 0 60px rgba(201,147,10,0.1), 0 0 0 1px rgba(201,147,10,0.1);
     }
-
-    .pro-plus-tag {
+    .price-card.featured:hover { box-shadow: 0 0 80px rgba(201,147,10,0.18), 0 20px 40px rgba(0,0,0,0.4); }
+    .price-card.featured::before {
+      content: '';
       position: absolute;
-      top: -11px;
-      left: 26px;
-      background: var(--green);
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    }
+
+    .price-tag {
+      position: absolute;
+      top: -13px; left: 28px;
+      background: linear-gradient(90deg, var(--amber), var(--amber2));
       color: #000;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 3px 12px;
-      border-radius: 5px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700;
+      padding: 3px 14px; border-radius: 6px;
+      letter-spacing: 2px; text-transform: uppercase;
     }
 
     .price-tier {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin-bottom: 14px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--dim); margin-bottom: 16px;
     }
+    .price-card.featured .price-tier { color: var(--amber); }
 
     .price-amount {
-      font-size: 54px;
-      font-weight: 800;
-      letter-spacing: -3px;
-      line-height: 1;
-    }
-
-    .price-amount sup {
-      font-size: 22px;
-      letter-spacing: 0;
-      vertical-align: super;
-      font-weight: 600;
-    }
-
-    .price-period {
-      font-size: 12px;
-      color: var(--dim);
-      margin-top: 6px;
-      margin-bottom: 24px;
-    }
-
-    .price-sep {
-      height: 1px;
-      background: var(--border);
-      margin-bottom: 22px;
-    }
-
-    .price-list { list-style: none; margin-bottom: 28px; }
-
-    .price-list li {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-size: 13.5px;
-      color: var(--mid);
-      padding: 6px 0;
-    }
-
-    .chk { width: 15px; height: 15px; flex-shrink: 0; }
-    .chk-b { color: var(--blue); }
-    .chk-g { color: var(--green); }
-
-    .btn-full {
-      width: 100%;
-      padding: 12px;
-      border-radius: 9px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      border: none;
-      letter-spacing: -0.1px;
-      transition: all 0.18s;
-    }
-
-    .btn-full-blue { background: var(--blue); color: #fff; }
-    .btn-full-blue:hover { opacity: 0.85; }
-
-    .btn-full-outline {
-      background: rgba(255,255,255,0.05);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 68px; letter-spacing: -1px; line-height: 1;
       color: var(--text);
+    }
+    .price-amount sup { font-size: 28px; vertical-align: super; font-family: 'Outfit', sans-serif; font-weight: 300; }
+    .price-period { font-size: 12px; color: var(--dim); margin-top: 8px; margin-bottom: 28px; font-family: 'JetBrains Mono', monospace; }
+
+    .price-line { height: 1px; background: var(--border); margin-bottom: 24px; }
+
+    .price-list { list-style: none; margin-bottom: 32px; }
+    .price-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 14px; color: var(--mid);
+      padding: 7px 0; font-weight: 300;
+    }
+    .chk-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+    .chk-b { color: var(--blue); }
+    .chk-a { color: var(--amber2); }
+
+    .btn-block {
+      display: block; width: 100%;
+      padding: 14px; border-radius: 10px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: 'Outfit', sans-serif;
+      border: none; letter-spacing: -.1px;
+      text-align: center; text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-block-blue {
+      background: var(--blue); color: #fff;
+      box-shadow: 0 0 24px rgba(10,124,248,0.35);
+    }
+    .btn-block-blue:hover { opacity: .88; box-shadow: 0 0 36px rgba(10,124,248,0.55); }
+    .btn-block-amber {
+      background: linear-gradient(90deg, var(--amber), var(--amber2)); color: #000;
+      box-shadow: 0 0 24px rgba(201,147,10,0.35);
+    }
+    .btn-block-amber:hover { opacity: .9; box-shadow: 0 0 40px rgba(201,147,10,0.55); }
+    .btn-block-outline {
+      background: rgba(255,255,255,0.04);
       border: 1px solid var(--border) !important;
+      color: var(--text);
+    }
+    .btn-block-outline:hover { background: rgba(255,255,255,0.08); }
+
+    /* ── Divider line with glow ────────────────────────────── */
+    .glow-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      margin: 0;
+      opacity: .35;
     }
 
-    .btn-full-outline:hover { background: rgba(255,255,255,0.09); }
-
-    /* ── Footer ──────────────────────────────────────────── */
+    /* ── Footer ────────────────────────────────────────────── */
     footer {
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
       border-top: 1px solid var(--border);
-      padding: 32px 48px;
+      padding: 36px 52px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: var(--dim);
-      font-size: 12px;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 10px; opacity: .4; }
+    .footer-brand svg { width: 22px; height: 22px; }
+    .footer-brand span { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+    footer p { font-size: 12px; color: var(--dim); }
+
+    /* ── Grain texture overlay ─────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: .025;
+      pointer-events: none;
+      z-index: 9000;
     }
 
-    /* ── Reveal ──────────────────────────────────────────── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(22px);
-      transition: opacity 0.65s ease, transform 0.65s ease;
-    }
-    .reveal.visible { opacity: 1; transform: none; }
-
-    /* ── Responsive ──────────────────────────────────────── */
-    @media (max-width: 820px) {
-      nav { padding: 0 20px; }
-      .hero-wrap { padding: 80px 20px 0; }
-      .wrap { padding: 0 20px; }
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      nav { padding: 0 22px; }
+      .hero { grid-template-columns: 1fr; padding: 90px 22px 40px; }
+      .hero-right { display: none; }
+      .wrap { padding: 0 22px; }
       .feat-grid { grid-template-columns: 1fr; }
-      .perf-grid { grid-template-columns: 1fr; }
-      .price-grid { grid-template-columns: 1fr; }
-      .stats { flex-wrap: wrap; }
-      .stat { padding: 20px 28px; border-right: none; border-bottom: 1px solid var(--border); }
-      .stat:last-child { border-bottom: none; }
-      footer { flex-direction: column; gap: 10px; padding: 24px 20px; text-align: center; }
+      .perf-inner { grid-template-columns: 1fr; gap: 40px; }
+      .price-grid { grid-template-columns: 1fr; max-width: 420px; }
+      .stats-bar { flex-wrap: wrap; }
+      .stat-item { padding: 22px 32px; border-right: none; border-bottom: 1px solid var(--border); width: 50%; }
+      .stat-item:nth-child(2n) { border-right: none; }
+      footer { flex-direction: column; gap: 12px; padding: 24px 22px; text-align: center; }
     }
   </style>
 </head>
 <body>
 
+<!-- Custom cursor -->
+<div class="cursor" id="cur"></div>
+<div class="cursor-ring" id="cur-ring"></div>
+
 <canvas id="canvas-bg"></canvas>
 
 <!-- Nav -->
-<nav>
+<nav id="nav">
   <a href="#" class="brand">
-    <img src="icon.ico" alt="TuneProGM">
-    <span class="brand-name">TuneProGM</span>
+    <svg class="brand-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="40" height="40" rx="10" fill="url(#bg-grad)"/>
+      <defs>
+        <linearGradient id="bg-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#0a1e3a"/>
+          <stop offset="100%" stop-color="#061220"/>
+        </linearGradient>
+        <linearGradient id="arc-grad" x1="8" y1="28" x2="32" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#c9930a"/>
+          <stop offset="50%" stop-color="#0a7cf8"/>
+          <stop offset="100%" stop-color="#00d4ff"/>
+        </linearGradient>
+      </defs>
+      <!-- Speedometer arc -->
+      <path d="M9 28 A13 13 0 0 1 31 28" stroke="url(#arc-grad)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <!-- Tick marks -->
+      <line x1="9" y1="28" x2="10.8" y2="26.2" stroke="#c9930a" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+      <line x1="20" y1="15" x2="20" y2="17.2" stroke="#0a7cf8" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+      <line x1="31" y1="28" x2="29.2" y2="26.2" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+      <!-- Needle -->
+      <line x1="20" y1="28" x2="25.5" y2="19" stroke="#0a7cf8" stroke-width="2" stroke-linecap="round"/>
+      <!-- Center dot -->
+      <circle cx="20" cy="28" r="2.5" fill="#0a7cf8"/>
+      <!-- Circuit trace bottom -->
+      <path d="M14 33 H20 M26 33 H20 M20 33 V31" stroke="rgba(10,124,248,0.4)" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <span class="brand-name">Tune<span>Pro</span>GM</span>
   </a>
   <div class="nav-right">
     <div class="lang-switcher">
@@ -635,101 +784,191 @@
 
 <!-- Hero -->
 <section>
-  <div class="hero-wrap">
-    <div class="hero-content">
-      <div class="eyebrow">
-        <span class="eyebrow-dot"></span>
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-badge rev rev-left">
+        <div class="hero-badge-dot"></div>
         <span data-i18n="hero_badge">Para Windows 10 / 11</span>
       </div>
-      <div class="hero-brand-row">
-        <img src="icon.ico" alt="TuneProGM" class="hero-icon">
-        <h1 class="hero-title">Tune<span class="hi">Pro</span><br>GM</h1>
-      </div>
-      <p class="hero-sub" data-i18n="hero_sub">Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.</p>
-      <div class="hero-btns">
-        <a href="#pricing" class="btn-primary" data-i18n="hero_cta1">Probar gratis 3 días</a>
+      <h1 class="hero-title rev rev-left rev-d1">
+        TUNE<br>
+        <span class="word-pro">PRO</span><br>
+        <span class="word-gm">GM</span>
+      </h1>
+      <p class="hero-sub rev rev-left rev-d2" data-i18n="hero_sub">
+        Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.
+      </p>
+      <div class="hero-btns rev rev-left rev-d3">
+        <a href="#pricing" class="btn-primary" data-i18n="hero_cta1">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1.5L2 5v4.5C2 12.6 4.7 15.1 8 15.5c3.3-.4 6-2.9 6-6V5L8 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          Probar gratis 3 días
+        </a>
         <a href="#features" class="btn-ghost" data-i18n="hero_cta2">Ver características</a>
+      </div>
+    </div>
+
+    <div class="hero-right rev rev-right rev-d1">
+      <div class="mockup-wrap">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-logo">
+              <div class="mockup-logo-dot"></div>
+              TuneProGM
+            </div>
+            <div class="mockup-badge">PRO+ ACTIVO</div>
+          </div>
+          <div class="mockup-cards">
+            <div class="mockup-card">
+              <div class="mockup-card-lbl">CPU</div>
+              <div class="mockup-card-val">Ultimate</div>
+            </div>
+            <div class="mockup-card">
+              <div class="mockup-card-lbl">Timer</div>
+              <div class="mockup-card-val">0.5ms</div>
+            </div>
+            <div class="mockup-card">
+              <div class="mockup-card-lbl">GPU</div>
+              <div class="mockup-card-val">Prio 8</div>
+            </div>
+            <div class="mockup-card gold">
+              <div class="mockup-card-lbl">Spectre</div>
+              <div class="mockup-card-val">OFF</div>
+            </div>
+            <div class="mockup-card gold">
+              <div class="mockup-card-lbl">Defender</div>
+              <div class="mockup-card-val">OFF</div>
+            </div>
+            <div class="mockup-card">
+              <div class="mockup-card-lbl">Mouse</div>
+              <div class="mockup-card-val">1:1</div>
+            </div>
+          </div>
+          <div class="mockup-bars">
+            <div class="mockup-bar-row">
+              <div class="mockup-bar-lbl">FPS</div>
+              <div class="mockup-bar-track"><div class="mockup-bar-fill b"></div></div>
+              <div class="mockup-bar-val">+28%</div>
+            </div>
+            <div class="mockup-bar-row">
+              <div class="mockup-bar-lbl">Latencia</div>
+              <div class="mockup-bar-track"><div class="mockup-bar-fill g"></div></div>
+              <div class="mockup-bar-val">-42%</div>
+            </div>
+            <div class="mockup-bar-row">
+              <div class="mockup-bar-lbl">CPU</div>
+              <div class="mockup-bar-track"><div class="mockup-bar-fill m"></div></div>
+              <div class="mockup-bar-val">-18%</div>
+            </div>
+          </div>
+          <div class="mockup-footer">
+            <span>v1.0 · Reversible en 1 click</span>
+            <span class="mockup-status">● Activo</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- Stats -->
-<div class="stats">
-  <div class="stat"><div class="stat-val" data-i18n="s1v">+30%</div><div class="stat-lbl" data-i18n="s1l">FPS</div></div>
-  <div class="stat"><div class="stat-val" data-i18n="s2v">&lt;5ms</div><div class="stat-lbl" data-i18n="s2l">Input lag</div></div>
-  <div class="stat"><div class="stat-val" data-i18n="s3v">100%</div><div class="stat-lbl" data-i18n="s3l">Reversible</div></div>
-  <div class="stat"><div class="stat-val" data-i18n="s4v">4</div><div class="stat-lbl" data-i18n="s4l">Idiomas</div></div>
+<div class="stats-bar">
+  <div class="stat-item rev rev-up">
+    <div class="stat-val" data-i18n="s1v" data-count="+30">+30%</div>
+    <div class="stat-lbl" data-i18n="s1l">FPS promedio</div>
+  </div>
+  <div class="stat-item rev rev-up rev-d1">
+    <div class="stat-val" data-i18n="s2v">&lt;5ms</div>
+    <div class="stat-lbl" data-i18n="s2l">Input lag</div>
+  </div>
+  <div class="stat-item rev rev-up rev-d2">
+    <div class="stat-val" data-i18n="s3v">100%</div>
+    <div class="stat-lbl" data-i18n="s3l">Reversible</div>
+  </div>
+  <div class="stat-item rev rev-up rev-d3">
+    <div class="stat-val" data-i18n="s4v">4</div>
+    <div class="stat-lbl" data-i18n="s4l">Idiomas</div>
+  </div>
 </div>
 
+<div class="glow-line"></div>
+
 <!-- Features -->
-<section class="features-sec" id="features">
+<section class="feat-sec" id="features">
   <div class="wrap">
-    <div class="feat-hdr reveal">
-      <div class="sec-label" data-i18n="feat_label">Características</div>
+    <div class="feat-hdr rev rev-up">
+      <div class="sec-eyebrow" data-i18n="feat_label">Características</div>
       <h2 class="sec-title" data-i18n="feat_title">Diseñado para rendir al máximo</h2>
       <p class="sec-sub" data-i18n="feat_sub">Cada función tiene un impacto medible en el rendimiento.</p>
     </div>
-    <div class="feat-grid">
-      <div class="feat-card reveal">
+
+    <div class="feat-grid" id="feat-grid">
+      <div class="feat-card rev rev-left">
+        <div class="feat-num">01</div>
         <div class="feat-icon">
-          <svg viewBox="0 0 18 18" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
-            <rect x="2" y="11" width="3" height="5" rx="1"/>
-            <rect x="7.5" y="6.5" width="3" height="9.5" rx="1"/>
-            <rect x="13" y="2" width="3" height="14" rx="1"/>
+          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
+            <rect x="2" y="12" width="3.5" height="6" rx="1"/>
+            <rect x="8.25" y="7" width="3.5" height="11" rx="1"/>
+            <rect x="14.5" y="2" width="3.5" height="16" rx="1"/>
           </svg>
         </div>
         <div class="feat-title" data-i18n="f1t">Más FPS</div>
         <p class="feat-desc" data-i18n="f1d">Prioriza CPU, GPU y RAM para tu juego. Los recursos van donde importan.</p>
       </div>
-      <div class="feat-card reveal">
+      <div class="feat-card rev rev-up rev-d1">
+        <div class="feat-num">02</div>
         <div class="feat-icon">
-          <svg viewBox="0 0 18 18" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1,9 4,4 7,13 10,6 13,10 16,7 18,9"/>
+          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1,11 4.5,4 8,15 11.5,6.5 15,11 18,8 20,11"/>
           </svg>
         </div>
         <div class="feat-title" data-i18n="f2t">Menos latencia</div>
         <p class="feat-desc" data-i18n="f2d">Optimización de red y reducción de input lag para reacciones más rápidas.</p>
       </div>
-      <div class="feat-card reveal">
-        <div class="feat-icon g">
-          <svg viewBox="0 0 18 18" fill="none" stroke="#00e676" stroke-width="1.6" stroke-linecap="round">
-            <path d="M9 1.5L2.5 4.5v5C2.5 13.5 5.5 16.8 9 17.5 12.5 16.8 15.5 13.5 15.5 9.5v-5L9 1.5z"/>
-            <polyline points="6.5,9 8.5,11 12,7.5" stroke-linejoin="round"/>
+      <div class="feat-card rev rev-right rev-d2">
+        <div class="feat-num">03</div>
+        <div class="feat-icon a">
+          <svg viewBox="0 0 20 20" fill="none" stroke="#c9930a" stroke-width="1.6" stroke-linecap="round">
+            <path d="M10 2L3 5.5v5C3 14.5 6 17.8 10 18.5 14 17.8 17 14.5 17 10.5v-5L10 2z"/>
+            <polyline points="7.5,10 9.5,12.5 13,8" stroke-linejoin="round"/>
           </svg>
         </div>
         <div class="feat-title" data-i18n="f3t">100% reversible</div>
         <p class="feat-desc" data-i18n="f3d">Al salir del modo gaming, todo vuelve a como estaba. Sin cambios permanentes.</p>
       </div>
-      <div class="feat-card reveal">
+      <div class="feat-card rev rev-left rev-d2">
+        <div class="feat-num">04</div>
         <div class="feat-icon">
-          <svg viewBox="0 0 18 18" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
-            <circle cx="9" cy="9" r="7.5"/>
-            <ellipse cx="9" cy="9" rx="3.5" ry="7.5"/>
-            <line x1="1.5" y1="9" x2="16.5" y2="9"/>
+          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="10" cy="10" r="8.5"/>
+            <ellipse cx="10" cy="10" rx="3.8" ry="8.5"/>
+            <line x1="1.5" y1="10" x2="18.5" y2="10"/>
           </svg>
         </div>
         <div class="feat-title" data-i18n="f4t">4 idiomas</div>
         <p class="feat-desc" data-i18n="f4d">Español, inglés, ruso y chino. Cambiá el idioma dentro de la app.</p>
       </div>
-      <div class="feat-card reveal">
-        <div class="feat-icon g">
-          <svg viewBox="0 0 18 18" fill="none" stroke="#00e676" stroke-width="1.6" stroke-linecap="round">
-            <rect x="1.5" y="4" width="6.5" height="10" rx="1.5"/>
-            <rect x="10" y="4" width="6.5" height="10" rx="1.5"/>
-            <line x1="9" y1="1.5" x2="9" y2="16.5" stroke-dasharray="2,1.5"/>
+      <div class="feat-card rev rev-up rev-d3">
+        <div class="feat-num">05</div>
+        <div class="feat-icon a">
+          <svg viewBox="0 0 20 20" fill="none" stroke="#c9930a" stroke-width="1.6" stroke-linecap="round">
+            <rect x="1.5" y="4" width="7.5" height="12" rx="1.5"/>
+            <rect x="11" y="4" width="7.5" height="12" rx="1.5"/>
+            <line x1="10" y1="1.5" x2="10" y2="18.5" stroke-dasharray="2.5,2"/>
           </svg>
         </div>
         <div class="feat-title" data-i18n="f5t">Comparativa en vivo</div>
         <p class="feat-desc" data-i18n="f5d">Métricas antes y después en tiempo real. Ves exactamente cuánto ganó tu PC.</p>
       </div>
-      <div class="feat-card reveal">
+      <div class="feat-card rev rev-right rev-d4">
+        <div class="feat-num">06</div>
         <div class="feat-icon">
-          <svg viewBox="0 0 18 18" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
-            <rect x="1.5" y="3" width="15" height="12" rx="2"/>
-            <line x1="1.5" y1="7" x2="16.5" y2="7"/>
-            <circle cx="4.5" cy="5" r="0.9" fill="#0a7cf8" stroke="none"/>
-            <circle cx="7" cy="5" r="0.9" fill="#0a7cf8" stroke="none"/>
+          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
+            <rect x="1.5" y="3.5" width="17" height="13" rx="2.5"/>
+            <line x1="1.5" y1="7.5" x2="18.5" y2="7.5"/>
+            <circle cx="5" cy="5.5" r="1" fill="#0a7cf8" stroke="none"/>
+            <circle cx="8" cy="5.5" r="1" fill="#0a7cf8" stroke="none"/>
           </svg>
         </div>
         <div class="feat-title" data-i18n="f6t">Windows 10 / 11</div>
@@ -739,86 +978,170 @@
   </div>
 </section>
 
+<div class="glow-line" style="background:linear-gradient(90deg,transparent,var(--amber),transparent)"></div>
+
 <!-- Performance -->
 <section class="perf-sec">
   <div class="wrap">
-    <div class="perf-grid">
-      <div class="perf-panel reveal" id="perf-bars">
-        <div class="perf-panel-title" data-i18n="perf_chart">Mejoras típicas con TuneProGM</div>
-        <div class="bar-row">
-          <div class="bar-label"><span data-i18n="bar1">FPS en juegos</span><span>+28%</span></div>
-          <div class="bar-track"><div class="bar-fill bar-blue" data-target="78"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span data-i18n="bar2">Input lag</span><span>-42%</span></div>
-          <div class="bar-track"><div class="bar-fill bar-green" data-target="62"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span data-i18n="bar3">Uso de CPU</span><span>-18%</span></div>
-          <div class="bar-track"><div class="bar-fill bar-mix" data-target="45"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span data-i18n="bar4">Temperatura en carga</span><span>-6°C</span></div>
-          <div class="bar-track"><div class="bar-fill bar-blue" data-target="35"></div></div>
-        </div>
+    <div class="perf-inner">
+      <div class="perf-copy rev rev-left">
+        <div class="sec-eyebrow amber" data-i18n="perf_chart_eyebrow">Rendimiento</div>
+        <h2 class="sec-title" data-i18n="perf_title">Resultados que se ven, no que se prometen.</h2>
+        <p class="sec-sub" data-i18n="perf_desc">TuneProGM aplica más de 20 optimizaciones del sistema operativo, red y hardware. Cada una con impacto medible. Al salir del modo gaming, todo vuelve a como estaba.</p>
+        <p style="font-size:11px;color:var(--dim);margin-top:16px;font-family:'JetBrains Mono',monospace" data-i18n="perf_note">* Resultados promedio. Varían según hardware y configuración.</p>
       </div>
-      <div class="perf-copy reveal">
-        <h3 data-i18n="perf_title">Resultados que se ven, no que se prometen.</h3>
-        <p data-i18n="perf_desc">TuneProGM aplica más de 20 optimizaciones del sistema operativo, red y hardware. Cada una con impacto medible. Al salir del modo gaming, todo vuelve a como estaba.</p>
-        <p class="perf-note" data-i18n="perf_note">* Resultados promedio. Varían según hardware y configuración.</p>
+
+      <div class="chart-wrap rev rev-right" id="perf-bars">
+        <div class="chart-title" data-i18n="perf_chart">Mejoras típicas con TuneProGM</div>
+        <div class="bar-row">
+          <div class="bar-label">
+            <span data-i18n="bar1">FPS en juegos</span>
+            <strong class="pos">+28%</strong>
+          </div>
+          <div class="bar-track"><div class="bar-fill b" data-target="78"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">
+            <span data-i18n="bar2">Input lag</span>
+            <strong class="neg">-42%</strong>
+          </div>
+          <div class="bar-track"><div class="bar-fill a" data-target="62"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">
+            <span data-i18n="bar3">Uso de CPU idle</span>
+            <strong class="pos">-18%</strong>
+          </div>
+          <div class="bar-track"><div class="bar-fill m" data-target="45"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">
+            <span data-i18n="bar4">Temperatura en carga</span>
+            <strong class="neg">-6°C</strong>
+          </div>
+          <div class="bar-track"><div class="bar-fill b" data-target="35"></div></div>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
+<div class="glow-line"></div>
+
 <!-- Pricing -->
-<section class="pricing-sec" id="pricing">
+<section class="price-sec" id="pricing">
   <div class="wrap">
-    <div class="price-hdr reveal">
-      <div class="sec-label" data-i18n="pl">Planes</div>
+    <div class="price-hdr rev rev-up">
+      <div class="sec-eyebrow" data-i18n="pl">Planes</div>
       <h2 class="sec-title" data-i18n="pt">Sin suscripciones. Pago único.</h2>
       <p class="sec-sub" data-i18n="ps">Probá 3 días gratis. Sin tarjeta. Sin compromiso.</p>
     </div>
+
     <div class="price-grid">
-      <div class="price-card reveal">
+      <div class="price-card rev rev-left rev-d1">
         <div class="price-tier">PRO</div>
         <div class="price-amount"><sup>$</sup>9</div>
         <div class="price-period" data-i18n="pp">pago único · para siempre</div>
-        <div class="price-sep"></div>
+        <div class="price-line"></div>
         <ul class="price-list">
-          <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pro1">Optimización completa y segura</span></li>
-          <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pro2">Prioridad de procesos</span></li>
-          <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pro3">Comparativa antes/después</span></li>
-          <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pro4">4 idiomas</span></li>
-          <li><svg class="chk chk-b" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pro5">Actualizaciones incluidas</span></li>
+          <li>
+            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pro1">Optimización completa y segura</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pro2">Prioridad de procesos</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pro3">Comparativa antes/después</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pro4">4 idiomas</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pro5">Actualizaciones incluidas</span>
+          </li>
         </ul>
-        <button class="btn-full btn-full-outline" data-i18n="pbt">Probar 3 días gratis</button>
+        <a href="#" class="btn-block btn-block-outline" data-i18n="pbt">Probar 3 días gratis</a>
       </div>
-      <div class="price-card pro-plus reveal">
-        <div class="pro-plus-tag" data-i18n="ptag">PRO+</div>
+
+      <div class="price-card featured rev rev-right rev-d1">
+        <div class="price-tag" data-i18n="ptag">PRO+</div>
         <div class="price-tier">PRO+</div>
         <div class="price-amount"><sup>$</sup>14</div>
         <div class="price-period" data-i18n="pp">pago único · para siempre</div>
-        <div class="price-sep"></div>
+        <div class="price-line"></div>
         <ul class="price-list">
-          <li><svg class="chk chk-g" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pp1">Todo lo de PRO</span></li>
-          <li><svg class="chk chk-g" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pp2">Spectre / Meltdown OFF</span></li>
-          <li><svg class="chk chk-g" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pp3">Defender OFF durante gaming</span></li>
-          <li><svg class="chk chk-g" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pp4">Máximo rendimiento</span></li>
-          <li><svg class="chk chk-g" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="pp5">Soporte prioritario</span></li>
+          <li>
+            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pp1">Todo lo de PRO</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pp2">Spectre / Meltdown OFF</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pp3">Defender OFF durante gaming</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pp4">Máximo rendimiento</span>
+          </li>
+          <li>
+            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
+              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span data-i18n="pp5">Soporte prioritario</span>
+          </li>
         </ul>
-        <button class="btn-full btn-full-blue" data-i18n="pbb">Comprar PRO+</button>
+        <a href="#" class="btn-block btn-block-amber" data-i18n="pbb">Comprar PRO+</a>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div style="display:flex; align-items:center; gap:8px; opacity:.45;">
-    <img src="icon.ico" alt="" style="width:18px; height:18px; object-fit:contain; border-radius:4px;">
+  <div class="footer-brand">
+    <svg viewBox="0 0 40 40" fill="none">
+      <path d="M9 28 A13 13 0 0 1 31 28" stroke="#0a7cf8" stroke-width="2" stroke-linecap="round" fill="none" opacity=".6"/>
+      <line x1="20" y1="28" x2="25.5" y2="19" stroke="#0a7cf8" stroke-width="1.8" stroke-linecap="round" opacity=".6"/>
+      <circle cx="20" cy="28" r="2" fill="#0a7cf8" opacity=".6"/>
+    </svg>
     <span>TuneProGM</span>
   </div>
-  <span>© 2025 TuneProGM &nbsp;·&nbsp; <span data-i18n="fr">Todos los derechos reservados</span></span>
+  <p>© 2025 TuneProGM &nbsp;·&nbsp; <span data-i18n="fr">Todos los derechos reservados</span></p>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -829,7 +1152,7 @@ const S = {
     nav_cta:'Probar gratis', hero_badge:'Para Windows 10 / 11',
     hero_sub:'Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.',
     hero_cta1:'Probar gratis 3 días', hero_cta2:'Ver características',
-    s1v:'+30%',s1l:'FPS', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Reversible', s4v:'4',s4l:'Idiomas',
+    s1v:'+30%',s1l:'FPS promedio', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Reversible', s4v:'4',s4l:'Idiomas',
     feat_label:'Características', feat_title:'Diseñado para rendir al máximo',
     feat_sub:'Cada función tiene un impacto medible en el rendimiento.',
     f1t:'Más FPS',f1d:'Prioriza CPU, GPU y RAM para tu juego. Los recursos van donde importan.',
@@ -838,8 +1161,9 @@ const S = {
     f4t:'4 idiomas',f4d:'Español, inglés, ruso y chino. Cambiá el idioma dentro de la app.',
     f5t:'Comparativa en vivo',f5d:'Métricas antes y después en tiempo real. Ves exactamente cuánto ganó tu PC.',
     f6t:'Windows 10 / 11',f6d:'Optimizado para Windows 10 y 11. Compatible con cualquier juego en PC.',
+    perf_chart_eyebrow:'Rendimiento',
     perf_chart:'Mejoras típicas con TuneProGM',
-    bar1:'FPS en juegos',bar2:'Input lag',bar3:'Uso de CPU',bar4:'Temperatura en carga',
+    bar1:'FPS en juegos',bar2:'Input lag',bar3:'Uso de CPU idle',bar4:'Temperatura en carga',
     perf_title:'Resultados que se ven, no que se prometen.',
     perf_desc:'TuneProGM aplica más de 20 optimizaciones del sistema operativo, red y hardware. Cada una con impacto medible. Al salir del modo gaming, todo vuelve a como estaba.',
     perf_note:'* Resultados promedio. Varían según hardware y configuración.',
@@ -853,7 +1177,7 @@ const S = {
     nav_cta:'Try free', hero_badge:'For Windows 10 / 11',
     hero_sub:'PC optimizer for gaming. More FPS. Less latency. No hassle.',
     hero_cta1:'Try free for 3 days', hero_cta2:'See features',
-    s1v:'+30%',s1l:'FPS', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Reversible', s4v:'4',s4l:'Languages',
+    s1v:'+30%',s1l:'Average FPS', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Reversible', s4v:'4',s4l:'Languages',
     feat_label:'Features',feat_title:'Built to perform at its best',feat_sub:'Every feature has a measurable impact on performance.',
     f1t:'More FPS',f1d:'Prioritizes CPU, GPU and RAM for your game. Resources go where they matter.',
     f2t:'Less latency',f2d:'Network optimization and input lag reduction for faster reactions.',
@@ -861,8 +1185,9 @@ const S = {
     f4t:'4 languages',f4d:'Spanish, English, Russian and Chinese. Switch language inside the app.',
     f5t:'Live comparison',f5d:'Before and after metrics in real time. See exactly how much your PC improved.',
     f6t:'Windows 10 / 11',f6d:'Optimized for Windows 10 and 11. Works with any PC game.',
+    perf_chart_eyebrow:'Performance',
     perf_chart:'Typical improvements with TuneProGM',
-    bar1:'FPS in games',bar2:'Input lag',bar3:'CPU usage',bar4:'Temperature under load',
+    bar1:'FPS in games',bar2:'Input lag',bar3:'Idle CPU usage',bar4:'Temperature under load',
     perf_title:'Results you can see, not just promises.',
     perf_desc:'TuneProGM applies over 20 OS, network and hardware optimizations. Each with measurable impact. When you exit gaming mode, everything goes back to normal.',
     perf_note:'* Average results. Vary by hardware and configuration.',
@@ -876,20 +1201,21 @@ const S = {
     nav_cta:'Попробовать', hero_badge:'Для Windows 10 / 11',
     hero_sub:'Оптимизатор ПК для игр. Больше FPS. Меньше задержек. Без сложностей.',
     hero_cta1:'Попробовать 3 дня бесплатно', hero_cta2:'Посмотреть функции',
-    s1v:'+30%',s1l:'FPS', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Обратимо', s4v:'4',s4l:'Языка',
+    s1v:'+30%',s1l:'FPS в среднем', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Обратимо', s4v:'4',s4l:'Языка',
     feat_label:'Функции',feat_title:'Создан для максимальной производительности',feat_sub:'Каждая функция имеет измеримое влияние на производительность.',
-    f1t:'Больше FPS',f1d:'Приоритет CPU, GPU и RAM для игры. Ресурсы там, где нужно.',
+    f1t:'Больше FPS',f1d:'Приоритет CPU, GPU и RAM для игры.',
     f2t:'Меньше задержек',f2d:'Оптимизация сети и снижение задержки ввода.',
-    f3t:'100% обратимо',f3d:'При выходе из режима gaming всё восстанавливается. Без постоянных изменений.',
-    f4t:'4 языка',f4d:'Испанский, английский, русский и китайский. Меняйте язык в приложении.',
-    f5t:'Сравнение в реальном времени',f5d:'Метрики до и после. Точно видите, насколько улучшился ПК.',
-    f6t:'Windows 10 / 11',f6d:'Оптимизирован для Windows 10 и 11. Работает с любой игрой.',
+    f3t:'100% обратимо',f3d:'При выходе из режима gaming всё восстанавливается.',
+    f4t:'4 языка',f4d:'Испанский, английский, русский и китайский.',
+    f5t:'Сравнение в реальном времени',f5d:'Метрики до и после.',
+    f6t:'Windows 10 / 11',f6d:'Работает с любой игрой.',
+    perf_chart_eyebrow:'Производительность',
     perf_chart:'Типичные улучшения с TuneProGM',
-    bar1:'FPS в играх',bar2:'Input lag',bar3:'Использование CPU',bar4:'Температура под нагрузкой',
+    bar1:'FPS в играх',bar2:'Input lag',bar3:'Использование CPU',bar4:'Температура',
     perf_title:'Результаты видны, не только обещаны.',
-    perf_desc:'TuneProGM применяет более 20 оптимизаций ОС, сети и оборудования. При выходе из режима gaming всё восстанавливается.',
-    perf_note:'* Средние результаты. Зависят от оборудования.',
-    pl:'Планы',pt:'Без подписок. Единоразовая оплата.',ps:'Попробуйте 3 дня бесплатно. Без карты.',
+    perf_desc:'TuneProGM применяет более 20 оптимизаций. При выходе из режима gaming всё восстанавливается.',
+    perf_note:'* Средние результаты.',
+    pl:'Планы',pt:'Без подписок. Единоразовая оплата.',ps:'Попробуйте 3 дня бесплатно.',
     pp:'единоразово · навсегда',ptag:'PRO+',pbt:'Попробовать 3 дня бесплатно',pbb:'Купить PRO+',
     pro1:'Полная безопасная оптимизация',pro2:'Приоритет процессов',pro3:'Сравнение до/после',pro4:'4 языка',pro5:'Обновления включены',
     pp1:'Всё из PRO',pp2:'Spectre / Meltdown ВЫКЛ',pp3:'Defender ВЫКЛ во время игры',pp4:'Максимальная производительность',pp5:'Приоритетная поддержка',
@@ -899,14 +1225,15 @@ const S = {
     nav_cta:'免费试用', hero_badge:'适用于 Windows 10 / 11',
     hero_sub:'游戏电脑优化器。更高帧率。更低延迟。简单易用。',
     hero_cta1:'免费试用 3 天', hero_cta2:'查看功能',
-    s1v:'+30%',s1l:'帧率', s2v:'<5ms',s2l:'输入延迟', s3v:'100%',s3l:'可还原', s4v:'4',s4l:'种语言',
+    s1v:'+30%',s1l:'平均帧率', s2v:'<5ms',s2l:'输入延迟', s3v:'100%',s3l:'可还原', s4v:'4',s4l:'种语言',
     feat_label:'功能',feat_title:'专为极致性能而生',feat_sub:'每项功能对性能都有可测量的影响。',
-    f1t:'更高帧率',f1d:'为游戏优先分配 CPU、GPU 和内存，资源用在刀刃上。',
-    f2t:'更低延迟',f2d:'网络优化和减少输入延迟，让反应更快。',
-    f3t:'100% 可还原',f3d:'退出游戏模式后，一切恢复原状。不做永久更改。',
-    f4t:'4 种语言',f4d:'西班牙语、英语、俄语和中文。随时在应用内切换语言。',
-    f5t:'实时对比',f5d:'实时显示前后对比指标。精确了解您的电脑提升了多少。',
-    f6t:'Windows 10 / 11',f6d:'针对 Windows 10 和 11 优化。适用于任何 PC 游戏。',
+    f1t:'更高帧率',f1d:'为游戏优先分配 CPU、GPU 和内存。',
+    f2t:'更低延迟',f2d:'网络优化和减少输入延迟。',
+    f3t:'100% 可还原',f3d:'退出游戏模式后，一切恢复原状。',
+    f4t:'4 种语言',f4d:'西班牙语、英语、俄语和中文。',
+    f5t:'实时对比',f5d:'实时显示前后对比指标。',
+    f6t:'Windows 10 / 11',f6d:'适用于任何 PC 游戏。',
+    perf_chart_eyebrow:'性能',
     perf_chart:'TuneProGM 典型提升效果',
     bar1:'游戏帧率',bar2:'输入延迟',bar3:'CPU 占用',bar4:'负载温度',
     perf_title:'看得见的成果，不只是承诺。',
@@ -921,7 +1248,6 @@ const S = {
 };
 
 const LL = { es:'ES', en:'EN', ru:'RU', zh:'中' };
-
 function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(b =>
     b.classList.toggle('active', b.textContent === LL[lang])
@@ -933,144 +1259,191 @@ function setLang(lang) {
   });
 }
 
-// ── Three.js: gaming performance scene ───────────────────────────────────────
+// ── Custom cursor ─────────────────────────────────────────────────────────────
+const cur = document.getElementById('cur');
+const curRing = document.getElementById('cur-ring');
+let cx = 0, cy = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { cx = e.clientX; cy = e.clientY; });
+(function animCur() {
+  rx += (cx - rx) * .12;
+  ry += (cy - ry) * .12;
+  cur.style.left = cx + 'px';
+  cur.style.top  = cy + 'px';
+  curRing.style.left = rx + 'px';
+  curRing.style.top  = ry + 'px';
+  requestAnimationFrame(animCur);
+})();
+
+// ── Nav scroll effect ─────────────────────────────────────────────────────────
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// ── Three.js: circuit network bg ──────────────────────────────────────────────
 const canvas = document.getElementById('canvas-bg');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
-camera.position.set(0, 1.8, 8);
-camera.lookAt(0, 0, 0);
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 0, 10);
 
-// Synthwave grid
-const gridGeo = new THREE.PlaneGeometry(50, 90, 24, 48);
-const gridMat = new THREE.MeshBasicMaterial({ color:0x00e676, wireframe:true, transparent:true, opacity:0.055 });
+// Hex grid base plane
+const gridGeo = new THREE.PlaneGeometry(60, 60, 30, 30);
+const gridMat = new THREE.MeshBasicMaterial({
+  color: 0x0a7cf8, wireframe: true, transparent: true, opacity: 0.028
+});
 const grid = new THREE.Mesh(gridGeo, gridMat);
-grid.rotation.x = -Math.PI / 2;
-grid.position.set(0, -2.8, -14);
+grid.rotation.x = -Math.PI / 2.4;
+grid.position.set(0, -4, -6);
 scene.add(grid);
 
-// Speed rails
-const railMat = new THREE.LineBasicMaterial({ color:0x0a7cf8, transparent:true, opacity:0.15 });
-[-3.5, 3.5].forEach(x => {
-  const pts = [new THREE.Vector3(x, -2.8, 4), new THREE.Vector3(x, -2.8, -30)];
-  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), railMat));
+// Floating nodes (circuit-board dots)
+const nodeGroup = new THREE.Group();
+const nodePositions = [];
+const N_NODES = 60;
+for (let i = 0; i < N_NODES; i++) {
+  const x = (Math.random() - .5) * 30;
+  const y = (Math.random() - .5) * 16;
+  const z = (Math.random() - .5) * 10 - 2;
+  nodePositions.push(new THREE.Vector3(x, y, z));
+  const isAmber = Math.random() > .7;
+  const geo = new THREE.SphereGeometry(.04 + Math.random() * .06, 6, 6);
+  const mat = new THREE.MeshBasicMaterial({
+    color: isAmber ? 0xc9930a : 0x0a7cf8,
+    transparent: true,
+    opacity: .3 + Math.random() * .5
+  });
+  const node = new THREE.Mesh(geo, mat);
+  node.position.set(x, y, z);
+  node.userData = { speed: .2 + Math.random() * .4, phase: Math.random() * Math.PI * 2, ox: x, oy: y };
+  nodeGroup.add(node);
+}
+scene.add(nodeGroup);
+
+// Connection lines between close nodes
+const lineMat = new THREE.LineBasicMaterial({ color: 0x0a7cf8, transparent: true, opacity: .06 });
+const lineMatA = new THREE.LineBasicMaterial({ color: 0xc9930a, transparent: true, opacity: .05 });
+for (let i = 0; i < N_NODES; i++) {
+  for (let j = i + 1; j < N_NODES; j++) {
+    const dist = nodePositions[i].distanceTo(nodePositions[j]);
+    if (dist < 5.5) {
+      const pts = [nodePositions[i], nodePositions[j]];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      scene.add(new THREE.Line(geo, Math.random() > .6 ? lineMatA : lineMat));
+    }
+  }
+}
+
+// Scanning beam
+const beamGeo = new THREE.PlaneGeometry(40, .012);
+const beamMat = new THREE.MeshBasicMaterial({
+  color: 0x0a7cf8, transparent: true, opacity: .18, side: THREE.DoubleSide
 });
+const beam = new THREE.Mesh(beamGeo, beamMat);
+scene.add(beam);
 
-// Central torus (blue)
-const torus = new THREE.Mesh(
-  new THREE.TorusGeometry(1.15, 0.038, 14, 90),
-  new THREE.MeshStandardMaterial({ color:0x0a7cf8, emissive:0x0a7cf8, emissiveIntensity:1.2, transparent:true, opacity:0.95 })
+// Ambient glow spheres
+const glowBlue = new THREE.Mesh(
+  new THREE.SphereGeometry(3, 12, 12),
+  new THREE.MeshBasicMaterial({ color: 0x0a7cf8, transparent: true, opacity: .04, wireframe: false })
 );
-scene.add(torus);
+glowBlue.position.set(-5, 2, -4);
+scene.add(glowBlue);
 
-// Outer ring (green, tilted)
-const ring2 = new THREE.Mesh(
-  new THREE.TorusGeometry(1.6, 0.022, 10, 90),
-  new THREE.MeshStandardMaterial({ color:0x00e676, emissive:0x00e676, emissiveIntensity:0.9, transparent:true, opacity:0.55 })
+const glowAmber = new THREE.Mesh(
+  new THREE.SphereGeometry(2.5, 12, 12),
+  new THREE.MeshBasicMaterial({ color: 0xc9930a, transparent: true, opacity: .035 })
 );
-ring2.rotation.set(1.1, 0, 0.3);
-scene.add(ring2);
+glowAmber.position.set(6, -3, -4);
+scene.add(glowAmber);
 
-// Burst lines
-const burst = new THREE.Group();
-for (let i = 0; i < 20; i++) {
-  const a = (i / 20) * Math.PI * 2;
-  const len = 0.25 + Math.random() * 0.65;
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(0.009, 0.009, len),
-    new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0x00e676 : 0x0a7cf8, transparent:true, opacity:0.35 + Math.random() * 0.45 })
-  );
-  const r = 1.75 + Math.random() * 0.45;
-  m.position.set(Math.cos(a) * r, Math.sin(a) * r, 0);
-  m.rotation.z = a;
-  burst.add(m);
-}
-scene.add(burst);
-
-// Pulsing core
-const core = new THREE.Mesh(
-  new THREE.SphereGeometry(0.28, 16, 16),
-  new THREE.MeshStandardMaterial({ color:0xffffff, emissive:0x55aaff, emissiveIntensity:2.5, transparent:true, opacity:0.95 })
-);
-scene.add(core);
-
-// Particles
-const N = 1800;
-const pos = new Float32Array(N * 3);
-const col = new Float32Array(N * 3);
-for (let i = 0; i < N; i++) {
-  pos[i*3]   = (Math.random()-0.5)*28;
-  pos[i*3+1] = (Math.random()-0.5)*14;
-  pos[i*3+2] = (Math.random()-0.5)*28;
-  const g = Math.random() > 0.55;
-  col[i*3]=g?0:0.04; col[i*3+1]=g?0.9:0.49; col[i*3+2]=g?0.46:0.97;
-}
-const pGeo = new THREE.BufferGeometry();
-pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-pGeo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
-const pMat = new THREE.PointsMaterial({ size:0.016, transparent:true, opacity:0.45, vertexColors:true });
-scene.add(new THREE.Points(pGeo, pMat));
-
-// Lights
-scene.add(new THREE.AmbientLight(0xffffff, 0.25));
-const bl = new THREE.PointLight(0x0a7cf8, 3.5, 16); bl.position.set(3, 2, 4); scene.add(bl);
-const gl = new THREE.PointLight(0x00e676, 2.2, 14); gl.position.set(-3, -1, 2); scene.add(gl);
-
-let mx = 0, my = 0, sy = 0;
+let mx = 0, my = 0, scrollY = 0;
 document.addEventListener('mousemove', e => {
-  mx = (e.clientX / window.innerWidth - 0.5) * 2;
-  my = -(e.clientY / window.innerHeight - 0.5) * 2;
+  mx = (e.clientX / innerWidth - .5) * 2;
+  my = -(e.clientY / innerHeight - .5) * 2;
 });
-window.addEventListener('scroll', () => { sy = window.scrollY; });
+window.addEventListener('scroll', () => { scrollY = window.scrollY; });
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 });
 
 let t = 0;
 (function loop() {
   requestAnimationFrame(loop);
-  t += 0.007;
+  t += .008;
 
-  torus.rotation.z  = t * 0.55;
-  torus.rotation.x  = t * 0.18 + my * 0.14;
-  ring2.rotation.z  = -t * 0.38;
-  ring2.rotation.y  = t * 0.25 + mx * 0.09;
-  burst.rotation.z  = t * 0.12;
-  core.scale.setScalar(1 + Math.sin(t * 2.8) * 0.09);
+  // Animate nodes
+  nodeGroup.children.forEach((node, i) => {
+    const d = node.userData;
+    node.position.y = d.oy + Math.sin(t * d.speed + d.phase) * .6;
+    node.position.x = d.ox + Math.cos(t * d.speed * .7 + d.phase) * .3;
+    node.material.opacity = .25 + Math.abs(Math.sin(t * d.speed + d.phase)) * .4;
+  });
 
-  grid.position.z = -14 + ((t * 2.8) % 3.75);
+  // Scanning beam sweep
+  beam.position.y = Math.sin(t * .4) * 7;
+  beamMat.opacity = .08 + Math.abs(Math.sin(t * .4)) * .1;
 
-  const fade = Math.max(0, 1 - sy / 550);
-  torus.material.opacity = 0.95 * fade;
-  ring2.material.opacity = 0.55 * fade;
-  core.material.opacity  = 0.95 * fade;
-  pMat.opacity           = 0.45 * fade;
-  gridMat.opacity        = 0.055 * fade;
+  // Grid scroll drift
+  grid.position.z = -6 + (scrollY * .003) % 2;
+  gridMat.opacity = Math.max(0, .028 * (1 - scrollY / 600));
 
-  camera.position.x += (mx * 0.45 - camera.position.x) * 0.042;
-  camera.position.y += (my * 0.28 + 1.8 - camera.position.y) * 0.042;
+  // Camera follow mouse
+  camera.position.x += (mx * .6 - camera.position.x) * .04;
+  camera.position.y += (my * .35 - camera.position.y) * .04;
   camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
 })();
 
-// ── Reveal ────────────────────────────────────────────────────────────────────
-const ro = new IntersectionObserver(
-  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-  { threshold: 0.1 }
-);
-document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+// ── Scroll reveal (left/right/up) ─────────────────────────────────────────────
+const ro = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in');
+      ro.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.rev').forEach(el => ro.observe(el));
 
-// ── Performance bars ──────────────────────────────────────────────────────────
+// ── Feature card 3D tilt ──────────────────────────────────────────────────────
+document.querySelectorAll('.feat-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    const rx = (y - .5) * 10;
+    const ry = (x - .5) * -10;
+    card.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.015)`;
+    card.style.setProperty('--mx', `${x * 100}%`);
+    card.style.setProperty('--my', `${y * 100}%`);
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+
+// ── Hero mockup mouse parallax ────────────────────────────────────────────────
+const heroRight = document.querySelector('.hero-right');
+if (heroRight) {
+  const wrap = heroRight.querySelector('.mockup-wrap');
+  document.addEventListener('mousemove', e => {
+    const x = (e.clientX / innerWidth - .5);
+    const y = (e.clientY / innerHeight - .5);
+    wrap.style.transform = `rotateY(${-15 + x * 8}deg) rotateX(${5 - y * 5}deg) translateY(${y * -8}px)`;
+  });
+}
+
+// ── Performance bars animate on scroll ───────────────────────────────────────
 new IntersectionObserver(entries => {
   if (entries[0].isIntersecting)
     document.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.target + '%'; });
-}, { threshold: 0.4 }).observe(document.getElementById('perf-bars'));
+}, { threshold: 0.3 }).observe(document.getElementById('perf-bars'));
 </script>
 </body>
 </html>
