@@ -3,1423 +3,1275 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TuneProGM — PC Optimizer for Gamers</title>
-  <meta name="description" content="Optimizador de PC para gaming. Más FPS, menos latencia, sin complicaciones.">
+  <title>TuneProGM — Feature Showcase</title>
   <link rel="icon" type="image/png" href="logo.png">
-  <link rel="shortcut icon" href="icon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:     #03080f;
-      --bg2:    #060d1a;
-      --bg3:    #0a1424;
       --blue:   #0a7cf8;
-      --blue2:  #1e90ff;
       --amber:  #c9930a;
       --amber2: #f0b429;
       --cyan:   #00d4ff;
+      --green:  #00e676;
       --text:   #e4e8f0;
       --mid:    #7a8ba0;
       --dim:    #3d4f62;
-      --border: rgba(255,255,255,0.06);
-      --bblue:  rgba(10,124,248,0.15);
-      --bamber: rgba(201,147,10,0.15);
+      --border: rgba(255,255,255,0.07);
     }
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior: smooth; }
+
     body {
-      background: var(--bg);
+      background: #03080f;
       color: var(--text);
-      font-family: 'Outfit', system-ui, sans-serif;
-      font-weight: 400;
-      overflow-x: hidden;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Canvas 3D ─────────────────────────────────────────── */
-    #canvas-bg {
+    /* ── Fixed 3D canvas behind everything ─── */
+    #c {
       position: fixed;
       inset: 0;
       z-index: 0;
-      pointer-events: none;
     }
 
-    /* ── Custom cursor ─────────────────────────────────────── */
-    .cursor {
+    /* ── Scroll container ─────────────────── */
+    #sc {
       position: fixed;
-      width: 8px; height: 8px;
-      background: var(--blue);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      transition: width .15s, height .15s, background .15s;
-      mix-blend-mode: screen;
-    }
-    .cursor-ring {
-      position: fixed;
-      width: 32px; height: 32px;
-      border: 1px solid rgba(10,124,248,0.5);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9998;
-      transform: translate(-50%, -50%);
-      transition: width .3s ease, height .3s ease, transform .08s, border-color .3s;
-    }
-    body:has(a:hover) .cursor, body:has(button:hover) .cursor {
-      width: 14px; height: 14px;
-      background: var(--amber);
-    }
-    body:has(a:hover) .cursor-ring, body:has(button:hover) .cursor-ring {
-      width: 48px; height: 48px;
-      border-color: rgba(201,147,10,0.5);
-    }
-
-    /* ── Nav ───────────────────────────────────────────────── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 500;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 52px;
-      background: rgba(3,8,15,0.7);
-      backdrop-filter: blur(24px) saturate(180%);
-      border-bottom: 1px solid var(--border);
-      transition: background .3s;
-    }
-    nav.scrolled { background: rgba(3,8,15,0.92); }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      text-decoration: none;
-      color: var(--text);
-    }
-    .brand-logo {
-      width: 32px; height: 32px;
-      flex-shrink: 0;
-      border-radius: 8px;
-      object-fit: cover;
-      object-position: center;
-    }
-    .brand-name {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-    .brand-name span { color: var(--blue); }
-
-    .nav-right { display: flex; align-items: center; gap: 16px; }
-
-    .lang-switcher {
-      display: flex;
-      gap: 1px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 3px;
-    }
-    .lang-btn {
-      background: none; border: none;
-      color: var(--dim);
-      font-size: 11px; font-weight: 700;
-      padding: 3px 8px; border-radius: 5px;
-      cursor: pointer; font-family: 'Barlow Condensed', sans-serif;
-      letter-spacing: 1px; text-transform: uppercase;
-      transition: all .18s;
-    }
-    .lang-btn.active { background: rgba(10,124,248,0.18); color: var(--blue); }
-    .lang-btn:hover:not(.active) { color: var(--text); }
-
-    .btn-nav {
-      background: var(--blue);
-      color: #fff; border: none;
-      border-radius: 8px; padding: 8px 18px;
-      font-size: 13px; font-weight: 600;
-      cursor: pointer; font-family: 'Outfit', sans-serif;
-      text-decoration: none; letter-spacing: -.1px;
-      transition: all .2s;
-      box-shadow: 0 0 20px rgba(10,124,248,0.35);
-    }
-    .btn-nav:hover { opacity: .88; box-shadow: 0 0 28px rgba(10,124,248,0.55); transform: translateY(-1px); }
-
-    /* ── Hero ──────────────────────────────────────────────── */
-    .hero {
-      position: relative;
+      inset: 0;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
       z-index: 1;
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      gap: 40px;
-      max-width: 1160px;
-      margin: 0 auto;
-      padding: 100px 52px 60px;
+      scrollbar-width: none;
     }
+    #sc::-webkit-scrollbar { display: none; }
 
-    .hero-left { position: relative; }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(10,124,248,0.1);
-      border: 1px solid rgba(10,124,248,0.25);
-      border-radius: 100px;
-      padding: 6px 14px;
-      margin-bottom: 28px;
-    }
-    .hero-badge-dot {
-      width: 6px; height: 6px;
-      background: var(--blue);
-      border-radius: 50%;
-      animation: pulse-dot 2s infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(10,124,248,.5); }
-      50%       { box-shadow: 0 0 0 5px rgba(10,124,248,0); }
-    }
-    .hero-badge span {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--blue);
-      letter-spacing: .5px;
-    }
-
-    .hero-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(72px, 10vw, 118px);
-      line-height: .9;
-      letter-spacing: 2px;
-      color: var(--text);
-      margin-bottom: 24px;
-    }
-    .hero-title .word-pro {
-      color: transparent;
-      -webkit-text-stroke: 2px var(--blue);
+    .s {
+      height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
       position: relative;
-    }
-    .hero-title .word-pro::after {
-      content: 'PRO';
-      position: absolute;
-      inset: 0;
-      color: var(--blue);
-      filter: blur(18px);
-      opacity: .35;
-    }
-    .hero-title .word-gm { color: var(--amber); }
-
-    .hero-sub {
-      font-size: 17px;
-      color: var(--mid);
-      line-height: 1.7;
-      max-width: 420px;
-      margin-bottom: 40px;
-      font-weight: 300;
-    }
-
-    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
-
-    .btn-primary {
-      background: var(--blue);
-      color: #fff; border: none;
-      border-radius: 10px; padding: 14px 28px;
-      font-size: 15px; font-weight: 600;
-      cursor: pointer; font-family: 'Outfit', sans-serif;
-      text-decoration: none; display: inline-flex;
-      align-items: center; gap: 8px;
-      letter-spacing: -.1px;
-      transition: all .22s;
-      box-shadow: 0 0 28px rgba(10,124,248,0.4);
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(10,124,248,0.65); }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px 28px;
-      font-size: 15px; font-weight: 500;
-      cursor: pointer; font-family: 'Outfit', sans-serif;
-      text-decoration: none; display: inline-block;
-      transition: all .22s;
-    }
-    .btn-ghost:hover { border-color: rgba(255,255,255,.22); transform: translateY(-2px); }
-
-    /* ── Hero right: 3D app mockup ─────────────────────────── */
-    .hero-right {
-      perspective: 900px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .mockup-wrap {
-      transform: rotateY(-15deg) rotateX(5deg);
-      transform-style: preserve-3d;
-      animation: float3d 6s ease-in-out infinite;
-      will-change: transform;
-    }
-    @keyframes float3d {
-      0%,100% { transform: rotateY(-15deg) rotateX(5deg) translateY(0); }
-      50%      { transform: rotateY(-12deg) rotateX(3deg) translateY(-14px); }
-    }
-    .hero-right:hover .mockup-wrap {
-      animation-play-state: paused;
-      transition: transform .6s ease;
-    }
-
-    .mockup {
-      width: 340px;
-      background: linear-gradient(145deg, #0a1525, #060f1c);
-      border: 1px solid rgba(10,124,248,0.25);
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow:
-        0 0 0 1px rgba(10,124,248,0.08),
-        0 40px 80px rgba(0,0,0,0.8),
-        0 0 60px rgba(10,124,248,0.12),
-        inset 0 1px 0 rgba(255,255,255,0.06);
-      position: relative;
-      overflow: hidden;
-    }
-    .mockup::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(10,124,248,0.6), transparent);
-    }
-
-    .mockup-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      padding-bottom: 12px;
+      /* glass tint so text is readable over 3D */
+      background: linear-gradient(135deg,
+        rgba(3,8,15,0.78) 0%,
+        rgba(3,8,15,0.45) 100%
+      );
+    }
+
+    /* section-specific tints */
+    #s0 { background: rgba(3,8,15,0.5); }
+    #s1 { background: linear-gradient(120deg, rgba(3,8,15,0.82) 50%, rgba(10,124,248,0.06) 100%); }
+    #s2 { background: linear-gradient(120deg, rgba(3,8,15,0.82) 50%, rgba(0,212,255,0.06) 100%); }
+    #s3 { background: linear-gradient(120deg, rgba(3,8,15,0.82) 50%, rgba(201,147,10,0.08) 100%); }
+    #s4 { background: linear-gradient(120deg, rgba(3,8,15,0.82) 50%, rgba(0,230,118,0.05) 100%); }
+    #s5 { background: rgba(3,8,15,0.82); }
+
+    /* ── Nav ──────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 900;
+      height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 52px;
+      background: rgba(3,8,15,0.55);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
     }
-    .mockup-logo {
-      display: flex; align-items: center; gap: 7px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px; font-weight: 700; letter-spacing: 1px;
+    .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); }
+    .brand img { width:28px; height:28px; border-radius:7px; object-fit:cover; }
+    .brand-name {
+      font-family:'Barlow Condensed',sans-serif;
+      font-size:16px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
     }
-    .mockup-logo-dot { width: 8px; height: 8px; background: var(--blue); border-radius: 50%; box-shadow: 0 0 8px var(--blue); }
-    .mockup-badge {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px; font-weight: 500;
-      background: rgba(201,147,10,0.15);
-      border: 1px solid rgba(201,147,10,0.35);
-      color: var(--amber2);
-      padding: 2px 8px; border-radius: 4px; letter-spacing: .5px;
+    .brand-name em { font-style:normal; color:var(--blue); }
+    .nav-cta {
+      background:var(--blue); color:#fff; border:none;
+      border-radius:8px; padding:7px 18px;
+      font-size:13px; font-weight:600; font-family:'Outfit',sans-serif;
+      text-decoration:none; cursor:pointer;
+      box-shadow:0 0 22px rgba(10,124,248,0.4);
+      transition:all .2s;
+    }
+    .nav-cta:hover { opacity:.88; transform:translateY(-1px); }
+
+    /* ── Nav dots ─────────────────────────── */
+    #dots {
+      position: fixed; right:28px; top:50%;
+      transform: translateY(-50%);
+      z-index: 900;
+      display: flex; flex-direction:column; gap:12px;
+    }
+    .dot {
+      width:7px; height:7px; border-radius:50%;
+      background:rgba(255,255,255,0.15);
+      cursor:pointer; transition:all .4s cubic-bezier(.16,1,.3,1);
+      position:relative;
+    }
+    .dot::after {
+      content: attr(data-lbl);
+      position:absolute; right:18px; top:50%;
+      transform:translateY(-50%);
+      font-family:'JetBrains Mono',monospace;
+      font-size:10px; color:var(--mid);
+      white-space:nowrap; opacity:0; transition:opacity .2s;
+      pointer-events:none;
+    }
+    .dot:hover::after { opacity:1; }
+    .dot.on { background:var(--blue); box-shadow:0 0 12px rgba(10,124,248,0.8); transform:scale(1.6); }
+    .dot.on-amber { background:var(--amber2); box-shadow:0 0 12px rgba(240,180,41,0.8); transform:scale(1.6); }
+
+    /* ── Progress top bar ─────────────────── */
+    #pb {
+      position:fixed; top:0; left:0; height:2px;
+      z-index:1000; width:0%; transition:width .4s ease;
+      background:linear-gradient(90deg,var(--blue),var(--cyan));
     }
 
-    .mockup-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-bottom: 12px;
+    /* ── Section inner ────────────────────── */
+    .inner {
+      max-width:1200px; margin:0 auto;
+      padding:58px 64px 0; width:100%;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:60px; align-items:center;
     }
-    .mockup-card {
-      background: rgba(10,124,248,0.06);
-      border: 1px solid rgba(10,124,248,0.12);
-      border-radius: 7px;
-      padding: 8px 6px;
-      text-align: center;
-    }
-    .mockup-card.gold {
-      background: rgba(201,147,10,0.08);
-      border-color: rgba(201,147,10,0.2);
-    }
-    .mockup-card-lbl {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 8px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px;
-    }
-    .mockup-card-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px; font-weight: 500;
-      color: var(--blue); margin-top: 3px;
-    }
-    .mockup-card.gold .mockup-card-val { color: var(--amber2); }
+    .inner.rev { direction:rtl; }
+    .inner.rev > * { direction:ltr; }
+    .inner.ctr { grid-template-columns:1fr; justify-items:center; text-align:center; }
 
-    .mockup-bars { margin-bottom: 10px; }
-    .mockup-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-    .mockup-bar-lbl { font-size: 9px; color: var(--dim); width: 40px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
-    .mockup-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
-    .mockup-bar-fill { height: 100%; border-radius: 2px; }
-    .mockup-bar-fill.b { background: linear-gradient(90deg, var(--blue), var(--cyan)); width: 78%; }
-    .mockup-bar-fill.g { background: linear-gradient(90deg, var(--amber), var(--amber2)); width: 62%; }
-    .mockup-bar-fill.m { background: linear-gradient(90deg, var(--blue), var(--amber)); width: 45%; }
-    .mockup-bar-val { font-size: 9px; color: var(--blue); font-family: 'JetBrains Mono', monospace; width: 30px; text-align: right; }
-
-    .mockup-footer {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 8px; color: var(--dim);
-      border-top: 1px solid var(--border);
-      padding-top: 8px;
-      display: flex; justify-content: space-between;
+    .eyebrow {
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px; font-weight:500;
+      letter-spacing:2.5px; text-transform:uppercase;
+      color:var(--blue); margin-bottom:18px;
+      display:flex; align-items:center; gap:10px;
     }
-    .mockup-status { color: var(--blue); }
+    .eyebrow::before { content:''; display:inline-block; width:22px; height:1px; background:currentColor; }
+    .eyebrow.a { color:var(--amber2); }
+    .eyebrow.g { color:var(--green); }
+    .eyebrow.c { color:var(--cyan); }
 
-    /* ── Stats bar ─────────────────────────────────────────── */
-    .stats-bar {
-      position: relative; z-index: 1;
-      background: rgba(6,13,26,0.7);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: center;
+    .ttl {
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(50px,6vw,84px);
+      line-height:.92; letter-spacing:1px;
+      margin-bottom:22px;
     }
-
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px 60px;
-      border-right: 1px solid var(--border);
-      position: relative;
+    .ttl .b { color:var(--blue); }
+    .ttl .a { color:var(--amber2); }
+    .ttl .g { color:var(--green); }
+    .ttl .c { color:var(--cyan); }
+    .ttl .o {
+      color:transparent;
+      -webkit-text-stroke:2px var(--blue);
     }
-    .stat-item:last-child { border-right: none; }
+    .ttl .oa { -webkit-text-stroke-color:var(--amber2); color:transparent; }
 
-    .stat-val {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 44px;
-      line-height: 1;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg, var(--blue), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .desc { font-size:16px; color:var(--mid); line-height:1.75; font-weight:300; max-width:430px; margin-bottom:30px; }
+
+    .bignum {
+      font-family:'Bebas Neue',sans-serif;
+      font-size:100px; line-height:1; letter-spacing:-2px;
+      background:linear-gradient(135deg,var(--blue),var(--cyan));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     }
-    .stat-item:nth-child(3) .stat-val {
-      background: linear-gradient(135deg, var(--amber), var(--amber2));
-      -webkit-background-clip: text;
-      background-clip: text;
+    .bignum.a { background:linear-gradient(135deg,var(--amber),var(--amber2)); -webkit-background-clip:text; background-clip:text; }
+    .bignumlbl { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--dim); margin-top:4px; }
+
+    /* ── Mockup ───────────────────────────── */
+    .mw { perspective:900px; }
+    .mb {
+      background:linear-gradient(145deg,#091422,#050c16);
+      border:1px solid rgba(10,124,248,0.2);
+      border-radius:16px; padding:18px;
+      box-shadow:0 40px 80px rgba(0,0,0,0.75),0 0 50px rgba(10,124,248,0.08),inset 0 1px 0 rgba(255,255,255,0.05);
+      transform:rotateY(-10deg) rotateX(4deg);
+      transform-style:preserve-3d;
+      transition:transform .6s ease;
+      position:relative; overflow:hidden;
     }
-    .stat-lbl {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 2.5px; text-transform: uppercase;
-      color: var(--dim); margin-top: 6px;
-    }
+    .mb::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(10,124,248,0.55),transparent); }
+    .mw:hover .mb { transform:rotateY(-5deg) rotateX(2deg); }
+    .mb.am { border-color:rgba(201,147,10,0.28); box-shadow:0 40px 80px rgba(0,0,0,0.75),0 0 50px rgba(201,147,10,0.1),inset 0 1px 0 rgba(255,255,255,0.05); }
+    .mb.am::before { background:linear-gradient(90deg,transparent,rgba(201,147,10,0.55),transparent); }
 
-    /* ── Section commons ───────────────────────────────────── */
-    section { position: relative; z-index: 1; }
-    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 52px; }
+    .mh { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .ml { display:flex; align-items:center; gap:6px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:1px; }
+    .mld { width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 7px var(--blue); }
+    .mld.a { background:var(--amber2); box-shadow:0 0 7px var(--amber2); }
+    .mbg { font-family:'JetBrains Mono',monospace; font-size:8px; padding:2px 7px; border-radius:4px; border:1px solid rgba(10,124,248,0.3); color:var(--blue); background:rgba(10,124,248,0.08); }
+    .mbg.a { border-color:rgba(201,147,10,0.3); color:var(--amber2); background:rgba(201,147,10,0.08); }
 
-    .sec-eyebrow {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--blue); margin-bottom: 16px;
-    }
-    .sec-eyebrow.amber { color: var(--amber); }
+    .mc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:10px; }
+    .mc { border-radius:7px; padding:9px 6px; text-align:center; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.05); transition:all .5s ease; }
+    .mc.gb { background:rgba(10,124,248,0.1); border-color:rgba(10,124,248,0.35); box-shadow:0 0 14px rgba(10,124,248,0.2); }
+    .mc.ga { background:rgba(201,147,10,0.1); border-color:rgba(201,147,10,0.38); box-shadow:0 0 14px rgba(201,147,10,0.22); }
+    .mc.gg { background:rgba(0,230,118,0.08); border-color:rgba(0,230,118,0.28); box-shadow:0 0 14px rgba(0,230,118,0.15); }
+    .mc-l { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--dim); text-transform:uppercase; letter-spacing:.5px; }
+    .mc-v { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; color:var(--dim); margin-top:3px; transition:color .5s; }
+    .mc.gb .mc-v { color:var(--blue); }
+    .mc.ga .mc-v { color:var(--amber2); }
+    .mc.gg .mc-v { color:var(--green); }
 
-    .sec-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: clamp(30px, 4.5vw, 50px);
-      font-weight: 700;
-      letter-spacing: -.5px;
-      line-height: 1.05;
-    }
-    .sec-sub {
-      font-size: 16px;
-      color: var(--mid);
-      margin-top: 14px;
-      max-width: 460px;
-      line-height: 1.7;
-      font-weight: 300;
-    }
+    .br { display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+    .brl { font-size:8px; color:var(--dim); width:38px; flex-shrink:0; font-family:'JetBrains Mono',monospace; }
+    .brt { flex:1; height:3px; background:rgba(255,255,255,0.04); border-radius:2px; overflow:hidden; }
+    .brf { height:100%; border-radius:2px; width:0; transition:width 1.3s cubic-bezier(.22,1,.36,1); }
+    .brf.b { background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+    .brf.a { background:linear-gradient(90deg,var(--amber),var(--amber2)); }
+    .brv { font-size:8px; font-family:'JetBrains Mono',monospace; width:28px; text-align:right; }
+    .brv.b { color:var(--blue); }
+    .brv.a { color:var(--amber2); }
+    .mf { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--dim); border-top:1px solid rgba(255,255,255,0.05); padding-top:8px; margin-top:4px; display:flex; justify-content:space-between; }
 
-    /* ── Reveal animations ─────────────────────────────────── */
-    .rev        { opacity: 0; transition: opacity .7s ease, transform .7s ease; }
-    .rev-left   { transform: translateX(-60px); }
-    .rev-right  { transform: translateX(60px); }
-    .rev-up     { transform: translateY(36px); }
-    .rev-scale  { transform: scale(.93); }
-    .rev.in     { opacity: 1 !important; transform: none !important; }
+    /* ── S4 before/after ─────────────────── */
+    .baw { display:flex; gap:16px; align-items:stretch; max-width:700px; width:100%; }
+    .bap { flex:1; background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:14px; padding:22px 18px; }
+    .bap.af { border-color:rgba(0,230,118,0.25); background:rgba(0,230,118,0.03); box-shadow:0 0 40px rgba(0,230,118,0.06); position:relative; overflow:hidden; }
+    .bap.af::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--green),transparent); }
+    .bal { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); margin-bottom:14px; }
+    .bap.af .bal { color:var(--green); }
+    .bam-v { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--mid); }
+    .bap.af .bam-v { color:var(--green); }
+    .bam-n { font-size:10px; color:var(--dim); margin-bottom:4px; font-family:'JetBrains Mono',monospace; }
+    .bam { margin-bottom:12px; }
+    .barr { display:flex; align-items:center; padding:0 6px; font-size:24px; color:var(--dim); flex-shrink:0; }
 
-    .rev-d1 { transition-delay: .08s; }
-    .rev-d2 { transition-delay: .16s; }
-    .rev-d3 { transition-delay: .24s; }
-    .rev-d4 { transition-delay: .32s; }
-    .rev-d5 { transition-delay: .40s; }
-    .rev-d6 { transition-delay: .48s; }
+    /* ── S5 pricing ──────────────────────── */
+    .pg { display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:680px; width:100%; }
+    .pc { background:rgba(6,13,26,0.9); border:1px solid var(--border); border-radius:18px; padding:34px 28px; position:relative; }
+    .pc.ft { border-color:rgba(201,147,10,0.35); background:linear-gradient(145deg,rgba(12,16,24,0.95),rgba(15,21,8,0.95)); box-shadow:0 0 50px rgba(201,147,10,0.1); }
+    .pc.ft::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--amber),transparent); }
+    .ptag { position:absolute; top:-12px; left:22px; background:linear-gradient(90deg,var(--amber),var(--amber2)); color:#000; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; padding:3px 12px; border-radius:5px; letter-spacing:2px; text-transform:uppercase; }
+    .pt { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--dim); margin-bottom:12px; }
+    .pc.ft .pt { color:var(--amber); }
+    .pa { font-family:'Bebas Neue',sans-serif; font-size:62px; line-height:1; letter-spacing:-1px; }
+    .pa sup { font-size:24px; font-family:'Outfit',sans-serif; font-weight:300; vertical-align:super; }
+    .pp { font-size:11px; color:var(--dim); margin-top:6px; margin-bottom:20px; font-family:'JetBrains Mono',monospace; }
+    .pl { height:1px; background:var(--border); margin-bottom:18px; }
+    .plist { list-style:none; margin-bottom:24px; }
+    .plist li { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--mid); padding:5px 0; font-weight:300; }
+    .ck { width:14px; height:14px; flex-shrink:0; }
+    .ckb { color:var(--blue); }
+    .cka { color:var(--amber2); }
+    .pbtn { display:block; width:100%; padding:12px; border-radius:10px; font-size:14px; font-weight:600; font-family:'Outfit',sans-serif; border:none; cursor:pointer; text-align:center; text-decoration:none; transition:all .2s; }
+    .pbtn.bl { background:var(--blue); color:#fff; box-shadow:0 0 22px rgba(10,124,248,0.35); }
+    .pbtn.bl:hover { opacity:.88; }
+    .pbtn.am { background:linear-gradient(90deg,var(--amber),var(--amber2)); color:#000; box-shadow:0 0 22px rgba(201,147,10,0.35); }
+    .pbtn.am:hover { opacity:.9; }
 
-    /* ── Features ──────────────────────────────────────────── */
-    .feat-sec { padding: 120px 0; }
+    /* ── Scroll hint ──────────────────────── */
+    #scroll-hint { position:absolute; bottom:28px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; }
+    #scroll-hint span { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+    .sa { width:1px; height:38px; background:linear-gradient(to bottom,var(--blue),transparent); animation:sa 1.8s ease-in-out infinite; }
+    @keyframes sa { 0%{opacity:0;transform:scaleY(0);transform-origin:top} 60%{opacity:1} 100%{opacity:0;transform:scaleY(1);transform-origin:top} }
 
-    .feat-hdr { margin-bottom: 60px; }
+    /* ── GSAP initial states ──────────────── */
+    .al { opacity:0; transform:translateX(-55px); }
+    .ar { opacity:0; transform:translateX(55px); }
+    .au { opacity:0; transform:translateY(28px); }
+    .asc { opacity:0; transform:scale(.93); }
 
-    .feat-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .feat-card {
-      background: var(--bg2);
-      padding: 36px 30px;
-      position: relative;
-      overflow: hidden;
-      transition: background .25s;
-      cursor: default;
-      /* 3D tilt via JS */
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
-    .feat-card:hover { background: #0b1628; }
-
-    .feat-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(10,124,248,0.06) 0%, transparent 60%);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .3s;
-    }
-    .feat-card:hover::after { opacity: 1; }
-
-    .feat-icon {
-      width: 42px; height: 42px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
-      background: rgba(10,124,248,0.1);
-      border: 1px solid rgba(10,124,248,0.2);
-      transition: box-shadow .3s;
-    }
-    .feat-icon.a {
-      background: rgba(201,147,10,0.1);
-      border-color: rgba(201,147,10,0.2);
-    }
-    .feat-card:hover .feat-icon { box-shadow: 0 0 20px rgba(10,124,248,0.3); }
-    .feat-card:hover .feat-icon.a { box-shadow: 0 0 20px rgba(201,147,10,0.3); }
-    .feat-icon svg { width: 20px; height: 20px; }
-
-    .feat-num {
-      position: absolute;
-      top: 18px; right: 22px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 52px;
-      color: rgba(255,255,255,0.025);
-      line-height: 1;
-      pointer-events: none;
-    }
-    .feat-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 18px; font-weight: 600;
-      letter-spacing: .2px;
-      margin-bottom: 10px;
-    }
-    .feat-desc { font-size: 13.5px; color: var(--mid); line-height: 1.68; font-weight: 300; }
-
-    /* ── Performance ───────────────────────────────────────── */
-    .perf-sec { padding: 80px 0 120px; }
-
-    .perf-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 70px;
-      align-items: center;
-    }
-
-    .perf-copy .sec-title { max-width: 400px; }
-
-    .chart-wrap {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 32px;
-      position: relative;
-      overflow: hidden;
-    }
-    .chart-wrap::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--blue), var(--amber), transparent);
-    }
-
-    .chart-title {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; font-weight: 500;
-      letter-spacing: 2px; text-transform: uppercase;
-      color: var(--dim); margin-bottom: 28px;
-    }
-
-    .bar-row { margin-bottom: 22px; }
-    .bar-label {
-      display: flex; justify-content: space-between;
-      font-size: 12px; color: var(--mid);
-      margin-bottom: 8px;
-      font-family: 'Outfit', sans-serif;
-    }
-    .bar-label strong {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .bar-label strong.pos { color: var(--blue); }
-    .bar-label strong.neg { color: var(--amber); }
-
-    .bar-track { height: 5px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 3px; width: 0; transition: width 1.4s cubic-bezier(.22,1,.36,1); }
-    .bar-fill.b { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
-    .bar-fill.a { background: linear-gradient(90deg, var(--amber), var(--amber2)); }
-    .bar-fill.m { background: linear-gradient(90deg, var(--blue), var(--amber)); }
-
-    /* ── Pricing ───────────────────────────────────────────── */
-    .price-sec { padding: 120px 0; }
-
-    .price-hdr { text-align: center; margin-bottom: 64px; }
-    .price-hdr .sec-sub { margin: 14px auto 0; }
-
-    .price-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      max-width: 760px;
-      margin: 0 auto;
-    }
-
-    .price-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 38px 34px;
-      position: relative;
-      transition: transform .3s, box-shadow .3s;
-    }
-    .price-card:hover { transform: translateY(-4px); }
-
-    .price-card.featured {
-      border-color: rgba(201,147,10,0.35);
-      background: linear-gradient(145deg, #0c1018, #0f1508);
-      box-shadow: 0 0 60px rgba(201,147,10,0.1), 0 0 0 1px rgba(201,147,10,0.1);
-    }
-    .price-card.featured:hover { box-shadow: 0 0 80px rgba(201,147,10,0.18), 0 20px 40px rgba(0,0,0,0.4); }
-    .price-card.featured::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--amber), transparent);
-    }
-
-    .price-tag {
-      position: absolute;
-      top: -13px; left: 28px;
-      background: linear-gradient(90deg, var(--amber), var(--amber2));
-      color: #000;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 10px; font-weight: 700;
-      padding: 3px 14px; border-radius: 6px;
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-
-    .price-tier {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 3px; text-transform: uppercase;
-      color: var(--dim); margin-bottom: 16px;
-    }
-    .price-card.featured .price-tier { color: var(--amber); }
-
-    .price-amount {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 68px; letter-spacing: -1px; line-height: 1;
-      color: var(--text);
-    }
-    .price-amount sup { font-size: 28px; vertical-align: super; font-family: 'Outfit', sans-serif; font-weight: 300; }
-    .price-period { font-size: 12px; color: var(--dim); margin-top: 8px; margin-bottom: 28px; font-family: 'JetBrains Mono', monospace; }
-
-    .price-line { height: 1px; background: var(--border); margin-bottom: 24px; }
-
-    .price-list { list-style: none; margin-bottom: 32px; }
-    .price-list li {
-      display: flex; align-items: flex-start; gap: 10px;
-      font-size: 14px; color: var(--mid);
-      padding: 7px 0; font-weight: 300;
-    }
-    .chk-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
-    .chk-b { color: var(--blue); }
-    .chk-a { color: var(--amber2); }
-
-    .btn-block {
-      display: block; width: 100%;
-      padding: 14px; border-radius: 10px;
-      font-size: 15px; font-weight: 600;
-      cursor: pointer; font-family: 'Outfit', sans-serif;
-      border: none; letter-spacing: -.1px;
-      text-align: center; text-decoration: none;
-      transition: all .2s;
-    }
-    .btn-block-blue {
-      background: var(--blue); color: #fff;
-      box-shadow: 0 0 24px rgba(10,124,248,0.35);
-    }
-    .btn-block-blue:hover { opacity: .88; box-shadow: 0 0 36px rgba(10,124,248,0.55); }
-    .btn-block-amber {
-      background: linear-gradient(90deg, var(--amber), var(--amber2)); color: #000;
-      box-shadow: 0 0 24px rgba(201,147,10,0.35);
-    }
-    .btn-block-amber:hover { opacity: .9; box-shadow: 0 0 40px rgba(201,147,10,0.55); }
-    .btn-block-outline {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border) !important;
-      color: var(--text);
-    }
-    .btn-block-outline:hover { background: rgba(255,255,255,0.08); }
-
-    /* ── Divider line with glow ────────────────────────────── */
-    .glow-line {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--blue), transparent);
-      margin: 0;
-      opacity: .35;
-    }
-
-    /* ── Footer ────────────────────────────────────────────── */
-    footer {
-      position: relative; z-index: 1;
-      border-top: 1px solid var(--border);
-      padding: 36px 52px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .footer-brand { display: flex; align-items: center; gap: 10px; opacity: .4; }
-    .footer-brand svg { width: 22px; height: 22px; }
-    .footer-brand span { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
-    footer p { font-size: 12px; color: var(--dim); }
-
-    /* ── Grain texture overlay ─────────────────────────────── */
+    /* Grain */
     body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-      opacity: .025;
-      pointer-events: none;
-      z-index: 9000;
+      content:''; position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity:.02; pointer-events:none; z-index:9000;
     }
+  /* ── Trial Modal ─────────────────────────── */
+  #trial-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 9100;
+    background: rgba(3,8,15,0.85);
+    backdrop-filter: blur(12px);
+    align-items: center; justify-content: center;
+  }
+  #trial-overlay.open { display: flex; }
 
-    /* ── Responsive ────────────────────────────────────────── */
-    @media (max-width: 900px) {
-      nav { padding: 0 22px; }
-      .hero { grid-template-columns: 1fr; padding: 90px 22px 40px; }
-      .hero-right { display: none; }
-      .wrap { padding: 0 22px; }
-      .feat-grid { grid-template-columns: 1fr; }
-      .perf-inner { grid-template-columns: 1fr; gap: 40px; }
-      .price-grid { grid-template-columns: 1fr; max-width: 420px; }
-      .stats-bar { flex-wrap: wrap; }
-      .stat-item { padding: 22px 32px; border-right: none; border-bottom: 1px solid var(--border); width: 50%; }
-      .stat-item:nth-child(2n) { border-right: none; }
-      footer { flex-direction: column; gap: 12px; padding: 24px 22px; text-align: center; }
-    }
+  #trial-modal {
+    background: linear-gradient(145deg,#060d1a,#091422);
+    border: 1px solid rgba(10,124,248,0.25);
+    border-radius: 20px;
+    padding: 44px 40px;
+    width: 100%; max-width: 420px;
+    position: relative;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(10,124,248,0.08);
+  }
+  #trial-modal::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg,transparent,rgba(10,124,248,0.6),transparent);
+    border-radius: 20px 20px 0 0;
+  }
+  .modal-close {
+    position: absolute; top: 16px; right: 18px;
+    background: none; border: none; color: var(--mid);
+    font-size: 22px; cursor: pointer; line-height: 1;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-tag {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(10,124,248,.1); border: 1px solid rgba(10,124,248,.25);
+    border-radius: 100px; padding: 4px 12px; margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--blue);
+  }
+  .modal-tag-dot { width:6px; height:6px; background:var(--blue); border-radius:50%; animation: pulse 2s infinite; }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px; line-height: 1; letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .modal-sub {
+    font-size: 14px; color: var(--mid); margin-bottom: 28px; line-height: 1.6;
+  }
+  .modal-input {
+    width: 100%; padding: 13px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; color: var(--text);
+    font-size: 15px; font-family: 'Outfit', sans-serif;
+    outline: none; transition: border-color .2s;
+    margin-bottom: 14px;
+  }
+  .modal-input:focus { border-color: rgba(10,124,248,0.5); }
+  .modal-input::placeholder { color: var(--dim); }
+  .modal-btn {
+    width: 100%; padding: 14px;
+    background: var(--blue); color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 600; font-family: 'Outfit', sans-serif;
+    cursor: pointer; transition: all .2s;
+    box-shadow: 0 0 28px rgba(10,124,248,0.35);
+  }
+  .modal-btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+  .modal-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .modal-note {
+    margin-top: 14px; font-size: 12px; color: var(--dim);
+    text-align: center; font-family: 'JetBrains Mono', monospace;
+  }
+  .modal-error {
+    display: none; margin-top: 12px;
+    padding: 10px 14px; border-radius: 8px;
+    background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.2);
+    font-size: 13px; color: #ff6b6b; text-align: center;
+  }
+  .modal-error.show { display: block; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
   </style>
 </head>
 <body>
 
-<!-- Custom cursor -->
-<div class="cursor" id="cur"></div>
-<div class="cursor-ring" id="cur-ring"></div>
-
-<canvas id="canvas-bg"></canvas>
-
-<!-- Nav -->
-<nav id="nav">
-  <a href="#" class="brand">
-    <img src="logo.png" alt="TuneProGM" class="brand-logo">
-    <span class="brand-name">Tune<span>Pro</span>GM</span>
-  </a>
-  <div class="nav-right">
-    <div class="lang-switcher">
-      <button class="lang-btn active" onclick="setLang('es')">ES</button>
-      <button class="lang-btn" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" onclick="setLang('ru')">RU</button>
-      <button class="lang-btn" onclick="setLang('zh')">中</button>
-    </div>
-    <a href="#pricing" class="btn-nav" data-i18n="nav_cta">Probar gratis</a>
-  </div>
-</nav>
-
-<!-- Hero -->
-<section>
-  <div class="hero">
-    <div class="hero-left">
-      <img src="logo.png" alt="TuneProGM" class="hero-logo rev rev-left" style="width:88px;height:88px;object-fit:cover;object-position:center;border-radius:20px;margin-bottom:24px;box-shadow:0 0 40px rgba(201,147,10,0.3),0 0 80px rgba(10,124,248,0.15);">
-      <div class="hero-badge rev rev-left">
-        <div class="hero-badge-dot"></div>
-        <span data-i18n="hero_badge">Para Windows 10 / 11</span>
-      </div>
-      <h1 class="hero-title rev rev-left rev-d1">
-        TUNE<br>
-        <span class="word-pro">PRO</span><br>
-        <span class="word-gm">GM</span>
-      </h1>
-      <p class="hero-sub rev rev-left rev-d2" data-i18n="hero_sub">
-        Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.
-      </p>
-      <div class="hero-btns rev rev-left rev-d3">
-        <a href="#pricing" class="btn-primary" data-i18n="hero_cta1">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 1.5L2 5v4.5C2 12.6 4.7 15.1 8 15.5c3.3-.4 6-2.9 6-6V5L8 1.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-          Probar gratis 3 días
-        </a>
-        <a href="#features" class="btn-ghost" data-i18n="hero_cta2">Ver características</a>
-      </div>
-    </div>
-
-    <div class="hero-right rev rev-right rev-d1">
-      <div class="mockup-wrap">
-        <div class="mockup">
-          <div class="mockup-header">
-            <div class="mockup-logo">
-              <div class="mockup-logo-dot"></div>
-              TuneProGM
-            </div>
-            <div class="mockup-badge">PRO+ ACTIVO</div>
-          </div>
-          <div class="mockup-cards">
-            <div class="mockup-card">
-              <div class="mockup-card-lbl">CPU</div>
-              <div class="mockup-card-val">Ultimate</div>
-            </div>
-            <div class="mockup-card">
-              <div class="mockup-card-lbl">Timer</div>
-              <div class="mockup-card-val">0.5ms</div>
-            </div>
-            <div class="mockup-card">
-              <div class="mockup-card-lbl">GPU</div>
-              <div class="mockup-card-val">Prio 8</div>
-            </div>
-            <div class="mockup-card gold">
-              <div class="mockup-card-lbl">Spectre</div>
-              <div class="mockup-card-val">OFF</div>
-            </div>
-            <div class="mockup-card gold">
-              <div class="mockup-card-lbl">Defender</div>
-              <div class="mockup-card-val">OFF</div>
-            </div>
-            <div class="mockup-card">
-              <div class="mockup-card-lbl">Mouse</div>
-              <div class="mockup-card-val">1:1</div>
-            </div>
-          </div>
-          <div class="mockup-bars">
-            <div class="mockup-bar-row">
-              <div class="mockup-bar-lbl">FPS</div>
-              <div class="mockup-bar-track"><div class="mockup-bar-fill b"></div></div>
-              <div class="mockup-bar-val">+28%</div>
-            </div>
-            <div class="mockup-bar-row">
-              <div class="mockup-bar-lbl">Latencia</div>
-              <div class="mockup-bar-track"><div class="mockup-bar-fill g"></div></div>
-              <div class="mockup-bar-val">-42%</div>
-            </div>
-            <div class="mockup-bar-row">
-              <div class="mockup-bar-lbl">CPU</div>
-              <div class="mockup-bar-track"><div class="mockup-bar-fill m"></div></div>
-              <div class="mockup-bar-val">-18%</div>
-            </div>
-          </div>
-          <div class="mockup-footer">
-            <span>v1.0 · Reversible en 1 click</span>
-            <span class="mockup-status">● Activo</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Stats -->
-<div class="stats-bar">
-  <div class="stat-item rev rev-up">
-    <div class="stat-val" data-i18n="s1v" data-count="+30">+30%</div>
-    <div class="stat-lbl" data-i18n="s1l">FPS promedio</div>
-  </div>
-  <div class="stat-item rev rev-up rev-d1">
-    <div class="stat-val" data-i18n="s2v">&lt;5ms</div>
-    <div class="stat-lbl" data-i18n="s2l">Input lag</div>
-  </div>
-  <div class="stat-item rev rev-up rev-d2">
-    <div class="stat-val" data-i18n="s3v">100%</div>
-    <div class="stat-lbl" data-i18n="s3l">Reversible</div>
-  </div>
-  <div class="stat-item rev rev-up rev-d3">
-    <div class="stat-val" data-i18n="s4v">4</div>
-    <div class="stat-lbl" data-i18n="s4l">Idiomas</div>
+<!-- ── Trial Modal ─────────────────────────────────────────────── -->
+<div id="trial-overlay">
+  <div id="trial-modal">
+    <button class="modal-close" onclick="closeTrialModal()">×</button>
+    <div class="modal-tag"><div class="modal-tag-dot"></div>3 días gratis</div>
+    <div class="modal-title">PROBÁ<br><span style="color:var(--blue)">GRATIS.</span></div>
+    <p class="modal-sub">Sin tarjeta. Sin compromiso. La licencia trial llega a tu email en segundos.</p>
+    <input class="modal-input" type="email" id="trial-email" placeholder="tu@email.com" autocomplete="email">
+    <button class="modal-btn" id="trial-btn" onclick="requestTrial()">Obtener acceso trial →</button>
+    <div class="modal-error" id="trial-error"></div>
+    <p class="modal-note">Sin spam · Podés darte de baja cuando quieras</p>
   </div>
 </div>
 
-<div class="glow-line"></div>
+<div id="pb"></div>
+<canvas id="c"></canvas>
 
-<!-- Features -->
-<section class="feat-sec" id="features">
-  <div class="wrap">
-    <div class="feat-hdr rev rev-up">
-      <div class="sec-eyebrow" data-i18n="feat_label">Características</div>
-      <h2 class="sec-title" data-i18n="feat_title">Diseñado para rendir al máximo</h2>
-      <p class="sec-sub" data-i18n="feat_sub">Cada función tiene un impacto medible en el rendimiento.</p>
+<nav>
+  <a href="index.html" class="brand">
+    <img src="logo.png" alt="TuneProGM">
+    <span class="brand-name">Tune<em>Pro</em>GM</span>
+  </a>
+  <a href="#" class="nav-cta" id="nav-cta" onclick="openTrialModal();return false;">Probar gratis</a>
+</nav>
+
+<div id="dots">
+  <div class="dot on" data-lbl="Inicio"      onclick="gotoS(0)"></div>
+  <div class="dot"    data-lbl="FPS"         onclick="gotoS(1)"></div>
+  <div class="dot"    data-lbl="Red"         onclick="gotoS(2)"></div>
+  <div class="dot"    data-lbl="PRO+"        onclick="gotoS(3)"></div>
+  <div class="dot"    data-lbl="Reversible"  onclick="gotoS(4)"></div>
+  <div class="dot"    data-lbl="Precios"     onclick="gotoS(5)"></div>
+</div>
+
+<div id="sc">
+
+<!-- S0 ─ Hero ──────────────────────────────────────────────── -->
+<section class="s" id="s0">
+  <div class="inner">
+    <div>
+      <div class="au" style="display:inline-flex;align-items:center;gap:8px;background:rgba(10,124,248,.1);border:1px solid rgba(10,124,248,.25);border-radius:100px;padding:5px 14px;margin-bottom:22px">
+        <div style="width:6px;height:6px;background:var(--blue);border-radius:50%;animation:pulse 2s infinite"></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)">Para Windows 10 / 11</span>
+      </div>
+      <h1 class="ttl al" style="font-size:clamp(72px,10vw,120px)">
+        TUNE<br><span class="o">PRO</span><br><span class="a">GM</span>
+      </h1>
+      <p class="desc al">Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.</p>
+      <div class="au" style="display:flex;gap:14px">
+        <a href="#" onclick="openTrialModal();return false;" style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:13px 26px;font-size:15px;font-weight:600;font-family:'Outfit',sans-serif;text-decoration:none;box-shadow:0 0 28px rgba(10,124,248,.4);transition:all .2s;cursor:pointer">Probar gratis 3 días</a>
+        <a href="#" onclick="gotoS(1)" style="background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:13px 26px;font-size:15px;font-weight:500;font-family:'Outfit',sans-serif;text-decoration:none;transition:all .2s;cursor:pointer">Ver características ↓</a>
+      </div>
     </div>
+    <div class="mw ar">
+      <div class="mb">
+        <div class="mh"><div class="ml"><div class="mld"></div>TuneProGM</div><div class="mbg a">PRO+ ACTIVO</div></div>
+        <div class="mc-grid">
+          <div class="mc gb"><div class="mc-l">CPU</div><div class="mc-v">Ultimate</div></div>
+          <div class="mc gb"><div class="mc-l">Timer</div><div class="mc-v">0.5ms</div></div>
+          <div class="mc gb"><div class="mc-l">GPU</div><div class="mc-v">Prio 8</div></div>
+          <div class="mc ga"><div class="mc-l">Spectre</div><div class="mc-v">OFF</div></div>
+          <div class="mc ga"><div class="mc-l">Defender</div><div class="mc-v">OFF</div></div>
+          <div class="mc gb"><div class="mc-l">Mouse</div><div class="mc-v">1:1</div></div>
+        </div>
+        <div class="br"><div class="brl">FPS</div><div class="brt"><div class="brf b" style="width:78%"></div></div><div class="brv b">+28%</div></div>
+        <div class="br"><div class="brl">Latencia</div><div class="brt"><div class="brf a" style="width:62%"></div></div><div class="brv a">-42%</div></div>
+        <div class="mf"><span>v1.0 · Reversible</span><span style="color:var(--blue)">● Activo</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="scroll-hint"><span>Scroll</span><div class="sa"></div></div>
+</section>
 
-    <div class="feat-grid" id="feat-grid">
-      <div class="feat-card rev rev-left">
-        <div class="feat-num">01</div>
-        <div class="feat-icon">
-          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
-            <rect x="2" y="12" width="3.5" height="6" rx="1"/>
-            <rect x="8.25" y="7" width="3.5" height="11" rx="1"/>
-            <rect x="14.5" y="2" width="3.5" height="16" rx="1"/>
-          </svg>
+<!-- S1 ─ FPS ───────────────────────────────────────────────── -->
+<section class="s" id="s1">
+  <div class="inner">
+    <div>
+      <div class="eyebrow al">Rendimiento</div>
+      <h2 class="ttl al">MÁS <span class="b">FPS.</span><br>SIEMPRE.</h2>
+      <p class="desc al">Plan de energía <strong>Ultimate Performance</strong>, timer del sistema a <strong>0.5ms</strong>, GPU priority 8. Recursos del sistema concentrados en tu juego.</p>
+      <div class="au"><div class="bignum">+30%</div><div class="bignumlbl">FPS promedio en juegos</div></div>
+    </div>
+    <div class="mw ar">
+      <div class="mb">
+        <div class="mh"><div class="ml"><div class="mld"></div>TuneProGM</div><div class="mbg">MODO PRO</div></div>
+        <div class="mc-grid">
+          <div class="mc gb"><div class="mc-l">CPU</div><div class="mc-v">Ultimate</div></div>
+          <div class="mc gb"><div class="mc-l">Timer</div><div class="mc-v">0.5ms</div></div>
+          <div class="mc gb"><div class="mc-l">GPU</div><div class="mc-v">Prio 8</div></div>
+          <div class="mc gb"><div class="mc-l">I/O</div><div class="mc-v">HIGH</div></div>
+          <div class="mc"><div class="mc-l">RAM</div><div class="mc-v">Auto</div></div>
+          <div class="mc"><div class="mc-l">SVC</div><div class="mc-v">OFF</div></div>
         </div>
-        <div class="feat-title" data-i18n="f1t">Más FPS</div>
-        <p class="feat-desc" data-i18n="f1d">Prioriza CPU, GPU y RAM para tu juego. Los recursos van donde importan.</p>
-      </div>
-      <div class="feat-card rev rev-up rev-d1">
-        <div class="feat-num">02</div>
-        <div class="feat-icon">
-          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1,11 4.5,4 8,15 11.5,6.5 15,11 18,8 20,11"/>
-          </svg>
-        </div>
-        <div class="feat-title" data-i18n="f2t">Menos latencia</div>
-        <p class="feat-desc" data-i18n="f2d">Optimización de red y reducción de input lag para reacciones más rápidas.</p>
-      </div>
-      <div class="feat-card rev rev-right rev-d2">
-        <div class="feat-num">03</div>
-        <div class="feat-icon a">
-          <svg viewBox="0 0 20 20" fill="none" stroke="#c9930a" stroke-width="1.6" stroke-linecap="round">
-            <path d="M10 2L3 5.5v5C3 14.5 6 17.8 10 18.5 14 17.8 17 14.5 17 10.5v-5L10 2z"/>
-            <polyline points="7.5,10 9.5,12.5 13,8" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <div class="feat-title" data-i18n="f3t">100% reversible</div>
-        <p class="feat-desc" data-i18n="f3d">Al salir del modo gaming, todo vuelve a como estaba. Sin cambios permanentes.</p>
-      </div>
-      <div class="feat-card rev rev-left rev-d2">
-        <div class="feat-num">04</div>
-        <div class="feat-icon">
-          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
-            <circle cx="10" cy="10" r="8.5"/>
-            <ellipse cx="10" cy="10" rx="3.8" ry="8.5"/>
-            <line x1="1.5" y1="10" x2="18.5" y2="10"/>
-          </svg>
-        </div>
-        <div class="feat-title" data-i18n="f4t">4 idiomas</div>
-        <p class="feat-desc" data-i18n="f4d">Español, inglés, ruso y chino. Cambiá el idioma dentro de la app.</p>
-      </div>
-      <div class="feat-card rev rev-up rev-d3">
-        <div class="feat-num">05</div>
-        <div class="feat-icon a">
-          <svg viewBox="0 0 20 20" fill="none" stroke="#c9930a" stroke-width="1.6" stroke-linecap="round">
-            <rect x="1.5" y="4" width="7.5" height="12" rx="1.5"/>
-            <rect x="11" y="4" width="7.5" height="12" rx="1.5"/>
-            <line x1="10" y1="1.5" x2="10" y2="18.5" stroke-dasharray="2.5,2"/>
-          </svg>
-        </div>
-        <div class="feat-title" data-i18n="f5t">Comparativa en vivo</div>
-        <p class="feat-desc" data-i18n="f5d">Métricas antes y después en tiempo real. Ves exactamente cuánto ganó tu PC.</p>
-      </div>
-      <div class="feat-card rev rev-right rev-d4">
-        <div class="feat-num">06</div>
-        <div class="feat-icon">
-          <svg viewBox="0 0 20 20" fill="none" stroke="#0a7cf8" stroke-width="1.6" stroke-linecap="round">
-            <rect x="1.5" y="3.5" width="17" height="13" rx="2.5"/>
-            <line x1="1.5" y1="7.5" x2="18.5" y2="7.5"/>
-            <circle cx="5" cy="5.5" r="1" fill="#0a7cf8" stroke="none"/>
-            <circle cx="8" cy="5.5" r="1" fill="#0a7cf8" stroke="none"/>
-          </svg>
-        </div>
-        <div class="feat-title" data-i18n="f6t">Windows 10 / 11</div>
-        <p class="feat-desc" data-i18n="f6d">Optimizado para Windows 10 y 11. Compatible con cualquier juego en PC.</p>
+        <div class="br"><div class="brl">FPS</div><div class="brt"><div class="brf b" id="s1b1" data-w="78"></div></div><div class="brv b">+28%</div></div>
+        <div class="br"><div class="brl">Frame T.</div><div class="brt"><div class="brf b" id="s1b2" data-w="55"></div></div><div class="brv b">-22%</div></div>
+        <div class="br"><div class="brl">CPU load</div><div class="brt"><div class="brf b" id="s1b3" data-w="40"></div></div><div class="brv b">-18%</div></div>
+        <div class="mf"><span>CPU · Timer · GPU Priority</span><span style="color:var(--blue)">● Activo</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="glow-line" style="background:linear-gradient(90deg,transparent,var(--amber),transparent)"></div>
-
-<!-- Performance -->
-<section class="perf-sec">
-  <div class="wrap">
-    <div class="perf-inner">
-      <div class="perf-copy rev rev-left">
-        <div class="sec-eyebrow amber" data-i18n="perf_chart_eyebrow">Rendimiento</div>
-        <h2 class="sec-title" data-i18n="perf_title">Resultados que se ven, no que se prometen.</h2>
-        <p class="sec-sub" data-i18n="perf_desc">TuneProGM aplica más de 20 optimizaciones del sistema operativo, red y hardware. Cada una con impacto medible. Al salir del modo gaming, todo vuelve a como estaba.</p>
-        <p style="font-size:11px;color:var(--dim);margin-top:16px;font-family:'JetBrains Mono',monospace" data-i18n="perf_note">* Resultados promedio. Varían según hardware y configuración.</p>
+<!-- S2 ─ Red ───────────────────────────────────────────────── -->
+<section class="s" id="s2">
+  <div class="inner rev">
+    <div>
+      <div class="eyebrow c al">Red & Input</div>
+      <h2 class="ttl al">INPUT LAG<br><span class="c">&lt;5MS.</span></h2>
+      <p class="desc al">NetworkThrottlingIndex eliminado, Nagle OFF, DNS Cloudflare 1.1.1.1. Cada paquete llega más rápido. Cada input se registra antes.</p>
+      <div class="au"><div class="bignum" style="background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;background-clip:text">&lt;5ms</div><div class="bignumlbl">Input lag con optimización activa</div></div>
+    </div>
+    <div class="mw al">
+      <div class="mb">
+        <div class="mh"><div class="ml"><div class="mld"></div>TuneProGM</div><div class="mbg">RED OPTIMIZADA</div></div>
+        <div class="mc-grid">
+          <div class="mc gb"><div class="mc-l">Red</div><div class="mc-v">Sin lim.</div></div>
+          <div class="mc gb"><div class="mc-l">Nagle</div><div class="mc-v">OFF</div></div>
+          <div class="mc gb"><div class="mc-l">DNS</div><div class="mc-v">1.1.1.1</div></div>
+          <div class="mc gb"><div class="mc-l">IPv6</div><div class="mc-v">OFF</div></div>
+          <div class="mc gb"><div class="mc-l">FSO</div><div class="mc-v">OFF</div></div>
+          <div class="mc gb"><div class="mc-l">Mouse</div><div class="mc-v">1:1</div></div>
+        </div>
+        <div class="br"><div class="brl">Ping</div><div class="brt"><div class="brf b" id="s2b1" data-w="72"></div></div><div class="brv b">-35%</div></div>
+        <div class="br"><div class="brl">Input lag</div><div class="brt"><div class="brf b" id="s2b2" data-w="62"></div></div><div class="brv b">-42%</div></div>
+        <div class="mf"><span>Network · DNS · Mouse 1:1</span><span style="color:var(--blue)">● Activo</span></div>
       </div>
+    </div>
+  </div>
+</section>
 
-      <div class="chart-wrap rev rev-right" id="perf-bars">
-        <div class="chart-title" data-i18n="perf_chart">Mejoras típicas con TuneProGM</div>
-        <div class="bar-row">
-          <div class="bar-label">
-            <span data-i18n="bar1">FPS en juegos</span>
-            <strong class="pos">+28%</strong>
-          </div>
-          <div class="bar-track"><div class="bar-fill b" data-target="78"></div></div>
+<!-- S3 ─ PRO+ ──────────────────────────────────────────────── -->
+<section class="s" id="s3">
+  <div class="inner">
+    <div>
+      <div class="eyebrow a al">PRO+ Exclusivo</div>
+      <h2 class="ttl al">SIN<br>LÍMITES<br><span class="oa">PRO+.</span></h2>
+      <p class="desc al">Desactiva las mitigaciones de <strong>Spectre/Meltdown</strong> y <strong>Windows Defender</strong> mientras jugás. Operaciones que Windows reserva — ahora en tus manos.</p>
+      <div class="au" style="display:flex;gap:32px">
+        <div><div class="bignum a" style="font-size:56px">Spectre</div><div class="bignumlbl">OFF durante el juego</div></div>
+        <div><div class="bignum a" style="font-size:56px">Defender</div><div class="bignumlbl">OFF durante el juego</div></div>
+      </div>
+    </div>
+    <div class="mw ar">
+      <div class="mb am">
+        <div class="mh"><div class="ml"><div class="mld a"></div>TuneProGM</div><div class="mbg a">PRO+ ACTIVO</div></div>
+        <div class="mc-grid">
+          <div class="mc"><div class="mc-l">CPU</div><div class="mc-v" style="color:var(--amber2)">Ultimate</div></div>
+          <div class="mc"><div class="mc-l">Timer</div><div class="mc-v" style="color:var(--amber2)">0.5ms</div></div>
+          <div class="mc"><div class="mc-l">GPU</div><div class="mc-v" style="color:var(--amber2)">Prio 8</div></div>
+          <div class="mc ga"><div class="mc-l">Spectre</div><div class="mc-v">OFF</div></div>
+          <div class="mc ga"><div class="mc-l">Defender</div><div class="mc-v">OFF</div></div>
+          <div class="mc ga"><div class="mc-l">Killer</div><div class="mc-v">ON</div></div>
         </div>
-        <div class="bar-row">
-          <div class="bar-label">
-            <span data-i18n="bar2">Input lag</span>
-            <strong class="neg">-42%</strong>
-          </div>
-          <div class="bar-track"><div class="bar-fill a" data-target="62"></div></div>
+        <div class="br"><div class="brl">FPS</div><div class="brt"><div class="brf a" id="s3b1" data-w="85"></div></div><div class="brv a">+34%</div></div>
+        <div class="br"><div class="brl">CPU free</div><div class="brt"><div class="brf a" id="s3b2" data-w="70"></div></div><div class="brv a">+28%</div></div>
+        <div class="mf"><span>Spectre · Defender · Process Killer</span><span style="color:var(--amber2)">● PRO+</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- S4 ─ Reversible ────────────────────────────────────────── -->
+<section class="s" id="s4">
+  <div class="inner ctr">
+    <div style="max-width:760px;width:100%">
+      <div class="eyebrow g au" style="justify-content:center">Seguridad</div>
+      <h2 class="ttl au" style="text-align:center;font-size:clamp(48px,6vw,80px)"><span class="g">100%</span> REVERSIBLE.<br>UN CLICK.</h2>
+      <p class="desc au" style="text-align:center;margin:0 auto 32px">Al presionar el botón, todo vuelve exactamente a como estaba. Sin cambios permanentes en el registro.</p>
+      <div class="baw asc">
+        <div class="bap">
+          <div class="bal">ANTES</div>
+          <div class="bam"><div class="bam-n">FPS promedio</div><div class="bam-v">94</div></div>
+          <div class="bam"><div class="bam-n">Input lag</div><div class="bam-v">12ms</div></div>
+          <div class="bam"><div class="bam-n">Timer</div><div class="bam-v">15.6ms</div></div>
         </div>
-        <div class="bar-row">
-          <div class="bar-label">
-            <span data-i18n="bar3">Uso de CPU idle</span>
-            <strong class="pos">-18%</strong>
-          </div>
-          <div class="bar-track"><div class="bar-fill m" data-target="45"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label">
-            <span data-i18n="bar4">Temperatura en carga</span>
-            <strong class="neg">-6°C</strong>
-          </div>
-          <div class="bar-track"><div class="bar-fill b" data-target="35"></div></div>
+        <div class="barr">→</div>
+        <div class="bap af">
+          <div class="bal">DESPUÉS</div>
+          <div class="bam"><div class="bam-n">FPS promedio</div><div class="bam-v">121</div></div>
+          <div class="bam"><div class="bam-n">Input lag</div><div class="bam-v">&lt;5ms</div></div>
+          <div class="bam"><div class="bam-n">Timer</div><div class="bam-v">0.5ms</div></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="glow-line"></div>
-
-<!-- Pricing -->
-<section class="price-sec" id="pricing">
-  <div class="wrap">
-    <div class="price-hdr rev rev-up">
-      <div class="sec-eyebrow" data-i18n="pl">Planes</div>
-      <h2 class="sec-title" data-i18n="pt">Sin suscripciones. Pago único.</h2>
-      <p class="sec-sub" data-i18n="ps">Probá 3 días gratis. Sin tarjeta. Sin compromiso.</p>
-    </div>
-
-    <div class="price-grid">
-      <div class="price-card rev rev-left rev-d1">
-        <div class="price-tier">PRO</div>
-        <div class="price-amount"><sup>$</sup>9</div>
-        <div class="price-period" data-i18n="pp">pago único · para siempre</div>
-        <div class="price-line"></div>
-        <ul class="price-list">
-          <li>
-            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pro1">Optimización completa y segura</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pro2">Prioridad de procesos</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pro3">Comparativa antes/después</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pro4">4 idiomas</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-b" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pro5">Actualizaciones incluidas</span>
-          </li>
-        </ul>
-        <a href="#" class="btn-block btn-block-outline" data-i18n="pbt">Probar 3 días gratis</a>
-      </div>
-
-      <div class="price-card featured rev rev-right rev-d1">
-        <div class="price-tag" data-i18n="ptag">PRO+</div>
-        <div class="price-tier">PRO+</div>
-        <div class="price-amount"><sup>$</sup>14</div>
-        <div class="price-period" data-i18n="pp">pago único · para siempre</div>
-        <div class="price-line"></div>
-        <ul class="price-list">
-          <li>
-            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pp1">Todo lo de PRO</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pp2">Spectre / Meltdown OFF</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pp3">Defender OFF durante gaming</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pp4">Máximo rendimiento</span>
-          </li>
-          <li>
-            <svg class="chk-icon chk-a" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/>
-              <polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span data-i18n="pp5">Soporte prioritario</span>
-          </li>
-        </ul>
-        <a href="#" class="btn-block btn-block-amber" data-i18n="pbb">Comprar PRO+</a>
+<!-- S5 ─ Precios ───────────────────────────────────────────── -->
+<section class="s" id="s5">
+  <div class="inner ctr">
+    <div style="max-width:760px;width:100%">
+      <div class="eyebrow au" style="justify-content:center">Planes</div>
+      <h2 class="ttl au" style="text-align:center;font-size:clamp(42px,5.5vw,70px);margin-bottom:6px">SIN SUSCRIPCIONES.</h2>
+      <p class="au" style="font-size:13px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:32px;text-align:center">Probá 3 días gratis · Sin tarjeta · Sin compromiso</p>
+      <div class="pg asc">
+        <div class="pc">
+          <div class="pt">PRO</div>
+          <div class="pa"><sup>$</sup>14<span style="font-size:28px;font-family:'Outfit',sans-serif;font-weight:300">.99</span></div>
+          <div class="pp">pago único · licencia permanente</div>
+          <div class="pl"></div>
+          <ul class="plist">
+            <li><svg class="ck ckb" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Optimización completa y segura</li>
+            <li><svg class="ck ckb" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>+30% FPS · &lt;5ms input lag</li>
+            <li><svg class="ck ckb" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>100% reversible</li>
+            <li><svg class="ck ckb" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>4 idiomas</li>
+          </ul>
+          <a href="#" class="pbtn bl" onclick="openTrialModal();return false;">Probar 3 días gratis</a>
+        </div>
+        <div class="pc ft">
+          <div class="ptag">RECOMENDADO</div>
+          <div class="pt">PRO+</div>
+          <div class="pa"><sup>$</sup>24<span style="font-size:28px;font-family:'Outfit',sans-serif;font-weight:300">.99</span></div>
+          <div class="pp">pago único · licencia permanente</div>
+          <div class="pl"></div>
+          <ul class="plist">
+            <li><svg class="ck cka" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Todo lo de PRO</li>
+            <li><svg class="ck cka" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Spectre / Meltdown OFF</li>
+            <li><svg class="ck cka" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Defender OFF durante gaming</li>
+            <li><svg class="ck cka" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Process Killer + Game Watcher</li>
+          </ul>
+          <a href="#" class="pbtn am">Comprar PRO+</a>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<footer>
-  <div class="footer-brand">
-    <img src="logo.png" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:6px;">
-    <span>TuneProGM</span>
-  </div>
-  <p>© 2025 TuneProGM &nbsp;·&nbsp; <span data-i18n="fr">Todos los derechos reservados</span></p>
-</footer>
+</div><!-- /sc -->
 
+<!-- Three.js + postprocessing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
-// ── i18n ──────────────────────────────────────────────────────────────────────
-const S = {
-  es: {
-    nav_cta:'Probar gratis', hero_badge:'Para Windows 10 / 11',
-    hero_sub:'Optimizador de PC para gaming. Más FPS. Menos latencia. Sin complicaciones.',
-    hero_cta1:'Probar gratis 3 días', hero_cta2:'Ver características',
-    s1v:'+30%',s1l:'FPS promedio', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Reversible', s4v:'4',s4l:'Idiomas',
-    feat_label:'Características', feat_title:'Diseñado para rendir al máximo',
-    feat_sub:'Cada función tiene un impacto medible en el rendimiento.',
-    f1t:'Más FPS',f1d:'Prioriza CPU, GPU y RAM para tu juego. Los recursos van donde importan.',
-    f2t:'Menos latencia',f2d:'Optimización de red y reducción de input lag para reacciones más rápidas.',
-    f3t:'100% reversible',f3d:'Al salir del modo gaming, todo vuelve a como estaba. Sin cambios permanentes.',
-    f4t:'4 idiomas',f4d:'Español, inglés, ruso y chino. Cambiá el idioma dentro de la app.',
-    f5t:'Comparativa en vivo',f5d:'Métricas antes y después en tiempo real. Ves exactamente cuánto ganó tu PC.',
-    f6t:'Windows 10 / 11',f6d:'Optimizado para Windows 10 y 11. Compatible con cualquier juego en PC.',
-    perf_chart_eyebrow:'Rendimiento',
-    perf_chart:'Mejoras típicas con TuneProGM',
-    bar1:'FPS en juegos',bar2:'Input lag',bar3:'Uso de CPU idle',bar4:'Temperatura en carga',
-    perf_title:'Resultados que se ven, no que se prometen.',
-    perf_desc:'TuneProGM aplica más de 20 optimizaciones del sistema operativo, red y hardware. Cada una con impacto medible. Al salir del modo gaming, todo vuelve a como estaba.',
-    perf_note:'* Resultados promedio. Varían según hardware y configuración.',
-    pl:'Planes',pt:'Sin suscripciones. Pago único.',ps:'Probá 3 días gratis. Sin tarjeta. Sin compromiso.',
-    pp:'pago único · para siempre',ptag:'PRO+',pbt:'Probar 3 días gratis',pbb:'Comprar PRO+',
-    pro1:'Optimización completa y segura',pro2:'Prioridad de procesos',pro3:'Comparativa antes/después',pro4:'4 idiomas',pro5:'Actualizaciones incluidas',
-    pp1:'Todo lo de PRO',pp2:'Spectre / Meltdown OFF',pp3:'Defender OFF durante gaming',pp4:'Máximo rendimiento',pp5:'Soporte prioritario',
-    fr:'Todos los derechos reservados',
-  },
-  en: {
-    nav_cta:'Try free', hero_badge:'For Windows 10 / 11',
-    hero_sub:'PC optimizer for gaming. More FPS. Less latency. No hassle.',
-    hero_cta1:'Try free for 3 days', hero_cta2:'See features',
-    s1v:'+30%',s1l:'Average FPS', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Reversible', s4v:'4',s4l:'Languages',
-    feat_label:'Features',feat_title:'Built to perform at its best',feat_sub:'Every feature has a measurable impact on performance.',
-    f1t:'More FPS',f1d:'Prioritizes CPU, GPU and RAM for your game. Resources go where they matter.',
-    f2t:'Less latency',f2d:'Network optimization and input lag reduction for faster reactions.',
-    f3t:'100% reversible',f3d:'When you exit gaming mode, everything goes back to normal. No permanent changes.',
-    f4t:'4 languages',f4d:'Spanish, English, Russian and Chinese. Switch language inside the app.',
-    f5t:'Live comparison',f5d:'Before and after metrics in real time. See exactly how much your PC improved.',
-    f6t:'Windows 10 / 11',f6d:'Optimized for Windows 10 and 11. Works with any PC game.',
-    perf_chart_eyebrow:'Performance',
-    perf_chart:'Typical improvements with TuneProGM',
-    bar1:'FPS in games',bar2:'Input lag',bar3:'Idle CPU usage',bar4:'Temperature under load',
-    perf_title:'Results you can see, not just promises.',
-    perf_desc:'TuneProGM applies over 20 OS, network and hardware optimizations. Each with measurable impact. When you exit gaming mode, everything goes back to normal.',
-    perf_note:'* Average results. Vary by hardware and configuration.',
-    pl:'Plans',pt:'No subscriptions. One-time payment.',ps:'Try free for 3 days. No card required.',
-    pp:'one-time · forever',ptag:'PRO+',pbt:'Try free for 3 days',pbb:'Buy PRO+',
-    pro1:'Full safe optimization',pro2:'Process priority',pro3:'Before/after comparison',pro4:'4 languages',pro5:'Updates included',
-    pp1:'Everything in PRO',pp2:'Spectre / Meltdown OFF',pp3:'Defender OFF during gaming',pp4:'Maximum performance',pp5:'Priority support',
-    fr:'All rights reserved',
-  },
-  ru: {
-    nav_cta:'Попробовать', hero_badge:'Для Windows 10 / 11',
-    hero_sub:'Оптимизатор ПК для игр. Больше FPS. Меньше задержек. Без сложностей.',
-    hero_cta1:'Попробовать 3 дня бесплатно', hero_cta2:'Посмотреть функции',
-    s1v:'+30%',s1l:'FPS в среднем', s2v:'<5ms',s2l:'Input lag', s3v:'100%',s3l:'Обратимо', s4v:'4',s4l:'Языка',
-    feat_label:'Функции',feat_title:'Создан для максимальной производительности',feat_sub:'Каждая функция имеет измеримое влияние на производительность.',
-    f1t:'Больше FPS',f1d:'Приоритет CPU, GPU и RAM для игры.',
-    f2t:'Меньше задержек',f2d:'Оптимизация сети и снижение задержки ввода.',
-    f3t:'100% обратимо',f3d:'При выходе из режима gaming всё восстанавливается.',
-    f4t:'4 языка',f4d:'Испанский, английский, русский и китайский.',
-    f5t:'Сравнение в реальном времени',f5d:'Метрики до и после.',
-    f6t:'Windows 10 / 11',f6d:'Работает с любой игрой.',
-    perf_chart_eyebrow:'Производительность',
-    perf_chart:'Типичные улучшения с TuneProGM',
-    bar1:'FPS в играх',bar2:'Input lag',bar3:'Использование CPU',bar4:'Температура',
-    perf_title:'Результаты видны, не только обещаны.',
-    perf_desc:'TuneProGM применяет более 20 оптимизаций. При выходе из режима gaming всё восстанавливается.',
-    perf_note:'* Средние результаты.',
-    pl:'Планы',pt:'Без подписок. Единоразовая оплата.',ps:'Попробуйте 3 дня бесплатно.',
-    pp:'единоразово · навсегда',ptag:'PRO+',pbt:'Попробовать 3 дня бесплатно',pbb:'Купить PRO+',
-    pro1:'Полная безопасная оптимизация',pro2:'Приоритет процессов',pro3:'Сравнение до/после',pro4:'4 языка',pro5:'Обновления включены',
-    pp1:'Всё из PRO',pp2:'Spectre / Meltdown ВЫКЛ',pp3:'Defender ВЫКЛ во время игры',pp4:'Максимальная производительность',pp5:'Приоритетная поддержка',
-    fr:'Все права защищены',
-  },
-  zh: {
-    nav_cta:'免费试用', hero_badge:'适用于 Windows 10 / 11',
-    hero_sub:'游戏电脑优化器。更高帧率。更低延迟。简单易用。',
-    hero_cta1:'免费试用 3 天', hero_cta2:'查看功能',
-    s1v:'+30%',s1l:'平均帧率', s2v:'<5ms',s2l:'输入延迟', s3v:'100%',s3l:'可还原', s4v:'4',s4l:'种语言',
-    feat_label:'功能',feat_title:'专为极致性能而生',feat_sub:'每项功能对性能都有可测量的影响。',
-    f1t:'更高帧率',f1d:'为游戏优先分配 CPU、GPU 和内存。',
-    f2t:'更低延迟',f2d:'网络优化和减少输入延迟。',
-    f3t:'100% 可还原',f3d:'退出游戏模式后，一切恢复原状。',
-    f4t:'4 种语言',f4d:'西班牙语、英语、俄语和中文。',
-    f5t:'实时对比',f5d:'实时显示前后对比指标。',
-    f6t:'Windows 10 / 11',f6d:'适用于任何 PC 游戏。',
-    perf_chart_eyebrow:'性能',
-    perf_chart:'TuneProGM 典型提升效果',
-    bar1:'游戏帧率',bar2:'输入延迟',bar3:'CPU 占用',bar4:'负载温度',
-    perf_title:'看得见的成果，不只是承诺。',
-    perf_desc:'TuneProGM 应用 20 多项系统、网络和硬件优化。退出游戏模式后，一切恢复原状。',
-    perf_note:'* 平均结果。因硬件和配置而异。',
-    pl:'方案',pt:'无订阅。一次性付款。',ps:'免费试用 3 天。无需信用卡。',
-    pp:'一次性 · 永久使用',ptag:'PRO+',pbt:'免费试用 3 天',pbb:'购买 PRO+',
-    pro1:'完整安全优化',pro2:'进程优先级',pro3:'前后对比',pro4:'4 种语言',pro5:'包含更新',
-    pp1:'PRO 的所有功能',pp2:'Spectre / Meltdown 关闭',pp3:'游戏期间关闭 Defender',pp4:'最高性能',pp5:'优先支持',
-    fr:'版权所有',
-  },
-};
-
-const LL = { es:'ES', en:'EN', ru:'RU', zh:'中' };
-function setLang(lang) {
-  document.querySelectorAll('.lang-btn').forEach(b =>
-    b.classList.toggle('active', b.textContent === LL[lang])
-  );
-  const s = S[lang];
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const k = el.dataset.i18n;
-    if (s[k] !== undefined) el.textContent = s[k];
-  });
-}
-
-// ── Custom cursor ─────────────────────────────────────────────────────────────
-const cur = document.getElementById('cur');
-const curRing = document.getElementById('cur-ring');
-let cx = 0, cy = 0, rx = 0, ry = 0;
-document.addEventListener('mousemove', e => { cx = e.clientX; cy = e.clientY; });
-(function animCur() {
-  rx += (cx - rx) * .12;
-  ry += (cy - ry) * .12;
-  cur.style.left = cx + 'px';
-  cur.style.top  = cy + 'px';
-  curRing.style.left = rx + 'px';
-  curRing.style.top  = ry + 'px';
-  requestAnimationFrame(animCur);
-})();
-
-// ── Nav scroll effect ─────────────────────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
-});
-
-// ── Three.js: circuit network bg ──────────────────────────────────────────────
-const canvas = document.getElementById('canvas-bg');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
+// ══════════════════════════════════════════════════════════════
+// THREE.JS CORE SETUP
+// ══════════════════════════════════════════════════════════════
+const W = innerWidth, H = innerHeight;
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(W, H);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
-camera.position.set(0, 0, 10);
+scene.background = new THREE.Color(0x03080f);
 
-// Hex grid base plane
-const gridGeo = new THREE.PlaneGeometry(60, 60, 30, 30);
-const gridMat = new THREE.MeshBasicMaterial({
-  color: 0x0a7cf8, wireframe: true, transparent: true, opacity: 0.028
+const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 200);
+camera.position.set(0, 0, 12);
+
+// ── Bloom post-processing ─────────────────────────────────────
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene, camera));
+const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(W, H), 1.2, 0.5, 0.75);
+composer.addPass(bloom);
+
+// ── Lights ────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+const ptBlue  = new THREE.PointLight(0x0a7cf8, 4, 25); ptBlue.position.set(4, 3, 6); scene.add(ptBlue);
+const ptAmber = new THREE.PointLight(0xc9930a, 3, 22); ptAmber.position.set(-4, -2, 5); scene.add(ptAmber);
+
+// ══════════════════════════════════════════════════════════════
+// SHARED: hex grid plane (always present)
+// ══════════════════════════════════════════════════════════════
+const hexVert = `
+  varying vec2 vUv;
+  void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
+`;
+const hexFrag = `
+  uniform float time;
+  uniform vec3 uColor;
+  varying vec2 vUv;
+
+  float hexDist(vec2 p) {
+    p = abs(p);
+    return max(dot(p, normalize(vec2(1.0,1.732))), p.x);
+  }
+  vec4 hexCoords(vec2 uv) {
+    vec2 r = vec2(1.0, 1.732);
+    vec2 h = r * 0.5;
+    vec2 a = mod(uv, r) - h;
+    vec2 b = mod(uv - h, r) - h;
+    return dot(a,a) < dot(b,b) ? vec4(a, floor((uv)/r)) : vec4(b, floor((uv-h)/r));
+  }
+  void main() {
+    vec2 uv = (vUv - 0.5) * vec2(28.0, 16.0);
+    vec4 hc = hexCoords(uv);
+    float d = hexDist(hc.xy);
+    float edge = 1.0 - smoothstep(0.44, 0.46, d);
+    float dist = length(vUv - 0.5);
+    float fade = 1.0 - smoothstep(0.2, 0.55, dist);
+    float pulse = 0.6 + 0.4 * sin(time * 0.6 + length(hc.zw) * 0.8);
+    gl_FragColor = vec4(uColor * edge * fade * pulse * 0.55, edge * fade * 0.4);
+  }
+`;
+const hexMat = new THREE.ShaderMaterial({
+  uniforms: { time: { value: 0 }, uColor: { value: new THREE.Vector3(0.04, 0.49, 0.97) } },
+  vertexShader: hexVert, fragmentShader: hexFrag,
+  transparent: true, depthWrite: false, side: THREE.DoubleSide
 });
-const grid = new THREE.Mesh(gridGeo, gridMat);
-grid.rotation.x = -Math.PI / 2.4;
-grid.position.set(0, -4, -6);
-scene.add(grid);
+const hexPlane = new THREE.Mesh(new THREE.PlaneGeometry(40, 24), hexMat);
+hexPlane.rotation.x = -Math.PI / 2.8;
+hexPlane.position.set(0, -5, -4);
+scene.add(hexPlane);
 
-// Floating nodes (circuit-board dots)
-const nodeGroup = new THREE.Group();
-const nodePositions = [];
-const N_NODES = 60;
-for (let i = 0; i < N_NODES; i++) {
-  const x = (Math.random() - .5) * 30;
-  const y = (Math.random() - .5) * 16;
-  const z = (Math.random() - .5) * 10 - 2;
-  nodePositions.push(new THREE.Vector3(x, y, z));
-  const isAmber = Math.random() > .7;
-  const geo = new THREE.SphereGeometry(.04 + Math.random() * .06, 6, 6);
-  const mat = new THREE.MeshBasicMaterial({
-    color: isAmber ? 0xc9930a : 0x0a7cf8,
-    transparent: true,
-    opacity: .3 + Math.random() * .5
-  });
-  const node = new THREE.Mesh(geo, mat);
-  node.position.set(x, y, z);
-  node.userData = { speed: .2 + Math.random() * .4, phase: Math.random() * Math.PI * 2, ox: x, oy: y };
-  nodeGroup.add(node);
+// ══════════════════════════════════════════════════════════════
+// SHARED: floating particles (InstancedMesh)
+// ══════════════════════════════════════════════════════════════
+const N_PARTICLES = 400;
+const pGeo = new THREE.SphereGeometry(0.04, 5, 5);
+const pMat = new THREE.MeshBasicMaterial({ color: 0x0a7cf8, transparent: true });
+const particles = new THREE.InstancedMesh(pGeo, pMat, N_PARTICLES);
+const pData = [];
+const dummy = new THREE.Object3D();
+for (let i = 0; i < N_PARTICLES; i++) {
+  const x = (Math.random() - .5) * 34;
+  const y = (Math.random() - .5) * 20;
+  const z = (Math.random() - .5) * 14 - 3;
+  pData.push({ x, y, z, ox: x, oy: y, sp: .15 + Math.random() * .35, ph: Math.random() * Math.PI * 2 });
+  dummy.position.set(x, y, z);
+  dummy.scale.setScalar(.3 + Math.random() * .7);
+  dummy.updateMatrix();
+  particles.setMatrixAt(i, dummy.matrix);
 }
-scene.add(nodeGroup);
+particles.instanceMatrix.needsUpdate = true;
+scene.add(particles);
 
-// Connection lines between close nodes
-const lineMat = new THREE.LineBasicMaterial({ color: 0x0a7cf8, transparent: true, opacity: .06 });
-const lineMatA = new THREE.LineBasicMaterial({ color: 0xc9930a, transparent: true, opacity: .05 });
-for (let i = 0; i < N_NODES; i++) {
-  for (let j = i + 1; j < N_NODES; j++) {
-    const dist = nodePositions[i].distanceTo(nodePositions[j]);
-    if (dist < 5.5) {
-      const pts = [nodePositions[i], nodePositions[j]];
-      const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      scene.add(new THREE.Line(geo, Math.random() > .6 ? lineMatA : lineMat));
+// ══════════════════════════════════════════════════════════════
+// SECTION GROUPS
+// ══════════════════════════════════════════════════════════════
+const grps = [];
+for (let i = 0; i < 6; i++) { const g = new THREE.Group(); g.visible = false; scene.add(g); grps.push(g); }
+
+// ── S0: Hero — DNA-style double helix rings ───────────────────
+function mkS0() {
+  const g = grps[0];
+  const ring1 = new THREE.Mesh(
+    new THREE.TorusGeometry(2.8, 0.06, 16, 120),
+    new THREE.MeshStandardMaterial({ color: 0x0a7cf8, emissive: 0x0a7cf8, emissiveIntensity: 2.5, transparent: true, opacity: .9 })
+  );
+  const ring2 = new THREE.Mesh(
+    new THREE.TorusGeometry(2.1, 0.04, 12, 100),
+    new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 2.0, transparent: true, opacity: .7 })
+  );
+  ring2.rotation.set(1.2, 0.4, 0.2);
+  const ring3 = new THREE.Mesh(
+    new THREE.TorusGeometry(3.6, 0.025, 8, 80),
+    new THREE.MeshStandardMaterial({ color: 0xc9930a, emissive: 0xc9930a, emissiveIntensity: 1.5, transparent: true, opacity: .4 })
+  );
+  ring3.rotation.set(0.6, 1.1, 0.8);
+  const core = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(.5, 1),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x55aaff, emissiveIntensity: 3, wireframe: true, transparent: true, opacity: .8 })
+  );
+  g.add(ring1, ring2, ring3, core);
+  g.userData = { ring1, ring2, ring3, core };
+}
+mkS0();
+
+// ── S1: FPS — 3D rising bars ──────────────────────────────────
+function mkS1() {
+  const g = grps[1];
+  const colors = [0x0a7cf8, 0x1e90ff, 0x00d4ff];
+  const heights = [3.2, 4.8, 2.4];
+  const bars = [];
+  for (let i = 0; i < 3; i++) {
+    const h = heights[i];
+    const geo = new THREE.BoxGeometry(.7, h, .7);
+    const mat = new THREE.MeshStandardMaterial({ color: colors[i], emissive: colors[i], emissiveIntensity: 1.5, transparent: true, opacity: .85 });
+    const bar = new THREE.Mesh(geo, mat);
+    bar.position.set((i - 1) * 1.4, -6, 0);
+    bar.scale.y = 0; // starts at 0, animates in
+    bar.userData.targetY = 1;
+    bars.push(bar);
+    g.add(bar);
+
+    // Glow halo per bar
+    const glow = new THREE.Mesh(
+      new THREE.BoxGeometry(.9, h, .9),
+      new THREE.MeshBasicMaterial({ color: colors[i], transparent: true, opacity: .08 })
+    );
+    glow.position.copy(bar.position);
+    glow.scale.y = 0;
+    glow.userData.isGlow = true;
+    glow.userData.bar = bar;
+    g.add(glow);
+  }
+
+  // Speed lines
+  const linesGeo = new THREE.BufferGeometry();
+  const lPts = [];
+  for (let i = 0; i < 30; i++) {
+    const x = (Math.random() - .5) * 20;
+    const y = (Math.random() - .5) * 12;
+    const z = -2 + Math.random() * 2;
+    lPts.push(x - 2, y, z, x + 2, y, z);
+  }
+  linesGeo.setAttribute('position', new THREE.Float32BufferAttribute(lPts, 3));
+  const lines = new THREE.LineSegments(linesGeo, new THREE.LineBasicMaterial({ color: 0x0a7cf8, transparent: true, opacity: .15 }));
+  g.add(lines);
+  g.userData = { bars, lines };
+}
+mkS1();
+
+// ── S2: Network — node graph with packets ─────────────────────
+function mkS2() {
+  const g = grps[2];
+  const nodePositions = [];
+  const nMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 2, transparent: true, opacity: .85 });
+  for (let i = 0; i < 28; i++) {
+    const x = (Math.random() - .5) * 14;
+    const y = (Math.random() - .5) * 9;
+    const z = (Math.random() - .5) * 6 - 2;
+    nodePositions.push(new THREE.Vector3(x, y, z));
+    const node = new THREE.Mesh(new THREE.SphereGeometry(.09 + Math.random() * .08, 8, 8), nMat);
+    node.position.set(x, y, z);
+    node.userData = { ox: x, oy: y, sp: .2 + Math.random() * .3, ph: Math.random() * Math.PI * 2 };
+    g.add(node);
+  }
+  // Edges
+  const edgePts = [];
+  const edgePairs = [];
+  for (let i = 0; i < nodePositions.length; i++) {
+    for (let j = i + 1; j < nodePositions.length; j++) {
+      if (nodePositions[i].distanceTo(nodePositions[j]) < 5.5) {
+        edgePts.push(nodePositions[i].x, nodePositions[i].y, nodePositions[i].z);
+        edgePts.push(nodePositions[j].x, nodePositions[j].y, nodePositions[j].z);
+        edgePairs.push([i, j]);
+      }
+    }
+  }
+  const edgeGeo = new THREE.BufferGeometry();
+  edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePts, 3));
+  g.add(new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: .1 })));
+
+  // Packets flying along random edges
+  const packets = [];
+  for (let k = 0; k < 12; k++) {
+    const pair = edgePairs[Math.floor(Math.random() * edgePairs.length)] || [0,1];
+    const pm = new THREE.Mesh(new THREE.SphereGeometry(.07, 6, 6),
+      new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 3 }));
+    pm.userData = {
+      from: nodePositions[pair[0]].clone(),
+      to:   nodePositions[pair[1]].clone(),
+      t: Math.random(), sp: .3 + Math.random() * .5,
+    };
+    packets.push(pm);
+    g.add(pm);
+  }
+  g.userData = { packets, nodePositions };
+}
+mkS2();
+
+// ── S3: PRO+ — pulsing amber diamond ─────────────────────────
+function mkS3() {
+  const g = grps[3];
+  const oct = new THREE.Mesh(
+    new THREE.OctahedronGeometry(1.8, 0),
+    new THREE.MeshStandardMaterial({ color: 0xc9930a, emissive: 0xc9930a, emissiveIntensity: 2.5, wireframe: false, metalness: .3, roughness: .2 })
+  );
+  const octWire = new THREE.Mesh(
+    new THREE.OctahedronGeometry(1.85, 0),
+    new THREE.MeshBasicMaterial({ color: 0xf0b429, wireframe: true, transparent: true, opacity: .5 })
+  );
+  const rings = [];
+  for (let i = 0; i < 3; i++) {
+    const r = new THREE.Mesh(
+      new THREE.TorusGeometry(2.4 + i * .8, 0.02 + i * .005, 8, 80),
+      new THREE.MeshBasicMaterial({ color: 0xc9930a, transparent: true, opacity: .35 - i * .08 })
+    );
+    r.rotation.x = i * 0.7;
+    r.rotation.y = i * 0.4;
+    rings.push(r);
+    g.add(r);
+  }
+  // Amber particles burst
+  const burstGeo = new THREE.BufferGeometry();
+  const burstPts = [];
+  for (let i = 0; i < 200; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI;
+    const r = 2.5 + Math.random() * 3;
+    burstPts.push(Math.sin(phi) * Math.cos(theta) * r, Math.cos(phi) * r, Math.sin(phi) * Math.sin(theta) * r);
+  }
+  burstGeo.setAttribute('position', new THREE.Float32BufferAttribute(burstPts, 3));
+  const burst = new THREE.Points(burstGeo, new THREE.PointsMaterial({ color: 0xf0b429, size: .07, transparent: true, opacity: .7 }));
+  g.add(oct, octWire, burst);
+  g.userData = { oct, octWire, rings, burst };
+}
+mkS3();
+
+// ── S4: Reversible — two orbs + energy beam ───────────────────
+function mkS4() {
+  const g = grps[4];
+  const matGray = new THREE.MeshStandardMaterial({ color: 0x3d4f62, emissive: 0x1a2535, emissiveIntensity: .8, transparent: true, opacity: .85 });
+  const matGreen = new THREE.MeshStandardMaterial({ color: 0x00e676, emissive: 0x00e676, emissiveIntensity: 2.5, transparent: true, opacity: .85 });
+  const orbA = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 2), matGray);
+  const orbB = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 2), matGreen);
+  orbA.position.set(-2.5, 0, 0);
+  orbB.position.set(2.5, 0, 0);
+
+  // Wireframe shells
+  const wA = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 2), new THREE.MeshBasicMaterial({ color: 0x3d4f62, wireframe: true, transparent: true, opacity: .25 }));
+  const wB = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 2), new THREE.MeshBasicMaterial({ color: 0x00e676, wireframe: true, transparent: true, opacity: .3 }));
+  wA.position.copy(orbA.position);
+  wB.position.copy(orbB.position);
+
+  // Energy beam connecting them
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-2.5, 0, 0),
+    new THREE.Vector3(0, .8, 0),
+    new THREE.Vector3(2.5, 0, 0),
+  ]);
+  const beam = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 30, 0.03, 8, false),
+    new THREE.MeshStandardMaterial({ color: 0x00e676, emissive: 0x00e676, emissiveIntensity: 3, transparent: true, opacity: .7 })
+  );
+
+  // Orbiting particles around green orb
+  const orbPts = [];
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    orbPts.push(Math.cos(a) * 1.6 + 2.5, Math.sin(a) * 1.6, 0);
+  }
+  const orbGeo = new THREE.BufferGeometry().setFromPoints(
+    Array.from({ length: 40 }, (_, i) => {
+      const a = (i / 40) * Math.PI * 2;
+      return new THREE.Vector3(Math.cos(a) * 1.6 + 2.5, Math.sin(a) * 1.6, 0);
+    })
+  );
+  const orbRing = new THREE.Points(orbGeo, new THREE.PointsMaterial({ color: 0x00e676, size: .07, transparent: true, opacity: .6 }));
+
+  g.add(orbA, orbB, wA, wB, beam, orbRing);
+  g.userData = { orbA, orbB, wA, wB, beam, orbRing };
+}
+mkS4();
+
+// ── S5: Pricing — two floating spheres ────────────────────────
+function mkS5() {
+  const g = grps[5];
+  const sphBlue = new THREE.Mesh(
+    new THREE.SphereGeometry(1.8, 32, 32),
+    new THREE.MeshStandardMaterial({ color: 0x0a7cf8, emissive: 0x0a7cf8, emissiveIntensity: 1.8, transparent: true, opacity: .18, wireframe: false })
+  );
+  const sphAmber = new THREE.Mesh(
+    new THREE.SphereGeometry(1.8, 32, 32),
+    new THREE.MeshStandardMaterial({ color: 0xc9930a, emissive: 0xc9930a, emissiveIntensity: 1.8, transparent: true, opacity: .18 })
+  );
+  sphBlue.position.set(-3.5, 0, 0);
+  sphAmber.position.set(3.5, 0, 0);
+  // Wireframes
+  const wb = new THREE.Mesh(new THREE.SphereGeometry(1.82, 16, 16), new THREE.MeshBasicMaterial({ color: 0x0a7cf8, wireframe: true, transparent: true, opacity: .2 }));
+  const wa = new THREE.Mesh(new THREE.SphereGeometry(1.82, 16, 16), new THREE.MeshBasicMaterial({ color: 0xc9930a, wireframe: true, transparent: true, opacity: .2 }));
+  wb.position.copy(sphBlue.position);
+  wa.position.copy(sphAmber.position);
+  g.add(sphBlue, sphAmber, wb, wa);
+  g.userData = { sphBlue, sphAmber, wb, wa };
+}
+mkS5();
+
+// ══════════════════════════════════════════════════════════════
+// SECTION MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+const sections = Array.from(document.querySelectorAll('.s'));
+const dots = document.querySelectorAll('.dot');
+const container = document.getElementById('sc');
+const pb = document.getElementById('pb');
+let cur = 0;
+let mx = 0, my = 0;
+
+// Theme per section
+const themes = [
+  { bloomStr: 1.5, camZ: 12, bloomColor: [0.04,.49,.97], hexColor: [0.04,.49,.97] },
+  { bloomStr: 1.3, camZ: 11, bloomColor: [0.04,.49,.97], hexColor: [0.04,.49,.97] },
+  { bloomStr: 1.4, camZ: 11, bloomColor: [0.0,.83,1.0],  hexColor: [0.0,.83,1.0]  },
+  { bloomStr: 2.0, camZ: 10, bloomColor: [0.79,.58,.04], hexColor: [0.79,.58,.04] },
+  { bloomStr: 1.2, camZ: 12, bloomColor: [0.0,.9,.46],   hexColor: [0.0,.9,.46]   },
+  { bloomStr: 0.9, camZ: 12, bloomColor: [0.04,.49,.97], hexColor: [0.04,.49,.97] },
+];
+
+const animated = new Set();
+
+function activateSection(idx) {
+  if (idx === cur && idx !== 0) return;
+  const prev = cur;
+  cur = idx;
+
+  // Update theme with GSAP
+  const th = themes[idx];
+  gsap.to(bloom, { strength: th.bloomStr, duration: 1.2, ease: 'power2.out' });
+  gsap.to(camera.position, { z: th.camZ, duration: 1.2, ease: 'power2.out' });
+
+  // Hex grid color
+  gsap.to(hexMat.uniforms.uColor.value, {
+    x: th.hexColor[0], y: th.hexColor[1], z: th.hexColor[2], duration: 1.2
+  });
+
+  // Point lights
+  if (idx === 3) {
+    gsap.to(ptAmber, { intensity: 8, duration: 1 });
+    gsap.to(ptBlue,  { intensity: 1, duration: 1 });
+  } else {
+    gsap.to(ptBlue,  { intensity: 4, duration: 1 });
+    gsap.to(ptAmber, { intensity: 3, duration: 1 });
+  }
+
+  // Particle color
+  const pColors = [0x0a7cf8, 0x0a7cf8, 0x00d4ff, 0xc9930a, 0x00e676, 0x0a7cf8];
+  pMat.color.setHex(pColors[idx]);
+
+  // Toggle groups: fade out previous, fade in new
+  if (prev !== idx) {
+    grps[prev].visible = false;
+  }
+  grps[idx].visible = true;
+
+  // Dots
+  dots.forEach((d, i) => {
+    d.classList.remove('on', 'on-amber');
+    if (i === idx) d.classList.add(idx === 3 ? 'on-amber' : 'on');
+  });
+
+  // Progress bar
+  const pct = (idx / (sections.length - 1)) * 100;
+  pb.style.width = pct + '%';
+  pb.style.background = idx === 3
+    ? 'linear-gradient(90deg,#c9930a,#f0b429)'
+    : 'linear-gradient(90deg,#0a7cf8,#00d4ff)';
+
+  // Animate HTML elements
+  if (!animated.has(idx)) {
+    animated.add(idx);
+    const sec = sections[idx];
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.to(sec.querySelectorAll('.al'), { opacity:1, x:0, duration:.75, stagger:.1 }, 0);
+    tl.to(sec.querySelectorAll('.ar'), { opacity:1, x:0, duration:.75, stagger:.1 }, 0.08);
+    tl.to(sec.querySelectorAll('.au'), { opacity:1, y:0, duration:.65, stagger:.1  }, 0.15);
+    tl.to(sec.querySelectorAll('.asc'),{ opacity:1, scale:1, duration:.65 }, 0.2);
+    // Bars
+    sec.querySelectorAll('[data-w]').forEach(b => {
+      tl.to(b, { width: b.dataset.w + '%', duration:1.3, ease:'power2.out' }, 0.5);
+    });
+    // S1: animate 3D bars
+    if (idx === 1) {
+      grps[1].userData.bars.forEach((bar, i) => {
+        gsap.to(bar.scale, { y: 1, duration: 1, delay: i * .15, ease: 'power3.out' });
+        gsap.to(bar.position, { y: 0, duration: 1, delay: i * .15, ease: 'power3.out' });
+      });
     }
   }
 }
 
-// Scanning beam
-const beamGeo = new THREE.PlaneGeometry(40, .012);
-const beamMat = new THREE.MeshBasicMaterial({
-  color: 0x0a7cf8, transparent: true, opacity: .18, side: THREE.DoubleSide
-});
-const beam = new THREE.Mesh(beamGeo, beamMat);
-scene.add(beam);
+// IntersectionObserver for scroll-snap sections
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) activateSection(sections.indexOf(e.target));
+  });
+}, { threshold: 0.55, root: container });
+sections.forEach(s => io.observe(s));
 
-// Ambient glow spheres
-const glowBlue = new THREE.Mesh(
-  new THREE.SphereGeometry(3, 12, 12),
-  new THREE.MeshBasicMaterial({ color: 0x0a7cf8, transparent: true, opacity: .04, wireframe: false })
-);
-glowBlue.position.set(-5, 2, -4);
-scene.add(glowBlue);
+// Init hero
+grps[0].visible = true;
+setTimeout(() => activateSection(0), 100);
 
-const glowAmber = new THREE.Mesh(
-  new THREE.SphereGeometry(2.5, 12, 12),
-  new THREE.MeshBasicMaterial({ color: 0xc9930a, transparent: true, opacity: .035 })
-);
-glowAmber.position.set(6, -3, -4);
-scene.add(glowAmber);
+// ══════════════════════════════════════════════════════════════
+// ANIMATION LOOP
+// ══════════════════════════════════════════════════════════════
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += .008;
 
-let mx = 0, my = 0, scrollY = 0;
+  // Hex shader time
+  hexMat.uniforms.time.value = t;
+
+  // Particles drift
+  for (let i = 0; i < N_PARTICLES; i++) {
+    const d = pData[i];
+    dummy.position.set(
+      d.ox + Math.cos(t * d.sp * .7 + d.ph) * .3,
+      d.oy + Math.sin(t * d.sp + d.ph) * .5,
+      d.z
+    );
+    dummy.scale.setScalar(.3 + .7 * (Math.sin(t * d.sp + d.ph) * .5 + .5));
+    dummy.updateMatrix();
+    particles.setMatrixAt(i, dummy.matrix);
+  }
+  particles.instanceMatrix.needsUpdate = true;
+
+  // Camera mouse follow
+  camera.position.x += (mx * .5 - camera.position.x) * .04;
+  camera.position.y += (my * .3 - camera.position.y) * .04;
+  camera.lookAt(0, 0, 0);
+
+  // ── S0 animations ──────────────────────────────────────────
+  if (cur === 0) {
+    const { ring1, ring2, ring3, core } = grps[0].userData;
+    ring1.rotation.z = t * .4;
+    ring1.rotation.x = t * .15 + my * .1;
+    ring2.rotation.z = -t * .3;
+    ring2.rotation.y = t * .2 + mx * .08;
+    ring3.rotation.y = t * .18;
+    ring3.rotation.z = -t * .12;
+    core.rotation.y = t * .6;
+    core.scale.setScalar(1 + Math.sin(t * 2.5) * .12);
+  }
+
+  // ── S1 animations ──────────────────────────────────────────
+  if (cur === 1) {
+    const { bars, lines } = grps[1].userData;
+    bars.forEach((b, i) => {
+      b.material.emissiveIntensity = 1.5 + Math.sin(t * 2 + i) * .5;
+    });
+    lines.material.opacity = .1 + Math.abs(Math.sin(t * 1.2)) * .1;
+    lines.position.x = Math.sin(t * .3) * .5;
+  }
+
+  // ── S2 animations ──────────────────────────────────────────
+  if (cur === 2) {
+    const { packets, nodePositions } = grps[2].userData;
+    packets.forEach(pk => {
+      pk.userData.t += pk.userData.sp * .008;
+      if (pk.userData.t > 1) pk.userData.t = 0;
+      pk.position.lerpVectors(pk.userData.from, pk.userData.to, pk.userData.t);
+      pk.material.emissiveIntensity = 2 + Math.sin(t * 4 + pk.userData.t * 10) * 1.5;
+    });
+    // Nodes drift
+    grps[2].children.forEach(ch => {
+      if (ch.userData.ox !== undefined) {
+        ch.position.y = ch.userData.oy + Math.sin(t * ch.userData.sp + ch.userData.ph) * .4;
+      }
+    });
+  }
+
+  // ── S3 animations ──────────────────────────────────────────
+  if (cur === 3) {
+    const { oct, octWire, rings, burst } = grps[3].userData;
+    oct.rotation.y = t * .4;
+    oct.rotation.x = t * .25;
+    octWire.rotation.y = -t * .3;
+    octWire.rotation.x = -t * .2;
+    oct.material.emissiveIntensity = 2 + Math.sin(t * 2.5) * 1;
+    rings.forEach((r, i) => {
+      r.rotation.z = t * (.2 + i * .1);
+      r.rotation.x = t * (.15 + i * .08);
+    });
+    burst.rotation.y = t * .08;
+  }
+
+  // ── S4 animations ──────────────────────────────────────────
+  if (cur === 4) {
+    const { orbA, orbB, wA, wB, orbRing } = grps[4].userData;
+    orbA.rotation.y = t * .3;
+    orbB.rotation.y = -t * .35;
+    wA.rotation.y = -t * .2;
+    wB.rotation.y = t * .25;
+    orbRing.rotation.z = t * .5;
+    orbB.material.emissiveIntensity = 2 + Math.sin(t * 3) * .8;
+  }
+
+  // ── S5 animations ──────────────────────────────────────────
+  if (cur === 5) {
+    const { sphBlue, sphAmber, wb, wa } = grps[5].userData;
+    sphBlue.rotation.y = t * .25;
+    sphAmber.rotation.y = -t * .2;
+    wb.rotation.y = -t * .15;
+    wa.rotation.y = t * .15;
+    sphBlue.position.y  = Math.sin(t * .7) * .4;
+    sphAmber.position.y = Math.sin(t * .7 + 1) * .4;
+    wb.position.y = sphBlue.position.y;
+    wa.position.y = sphAmber.position.y;
+  }
+
+  composer.render();
+}
+animate();
+
+// ══════════════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════════════
 document.addEventListener('mousemove', e => {
   mx = (e.clientX / innerWidth - .5) * 2;
   my = -(e.clientY / innerHeight - .5) * 2;
 });
-window.addEventListener('scroll', () => { scrollY = window.scrollY; });
 window.addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
+  const W = innerWidth, H = innerHeight;
+  camera.aspect = W / H;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(W, H);
+  composer.setSize(W, H);
 });
-
-let t = 0;
-(function loop() {
-  requestAnimationFrame(loop);
-  t += .008;
-
-  // Animate nodes
-  nodeGroup.children.forEach((node, i) => {
-    const d = node.userData;
-    node.position.y = d.oy + Math.sin(t * d.speed + d.phase) * .6;
-    node.position.x = d.ox + Math.cos(t * d.speed * .7 + d.phase) * .3;
-    node.material.opacity = .25 + Math.abs(Math.sin(t * d.speed + d.phase)) * .4;
-  });
-
-  // Scanning beam sweep
-  beam.position.y = Math.sin(t * .4) * 7;
-  beamMat.opacity = .08 + Math.abs(Math.sin(t * .4)) * .1;
-
-  // Grid scroll drift
-  grid.position.z = -6 + (scrollY * .003) % 2;
-  gridMat.opacity = Math.max(0, .028 * (1 - scrollY / 600));
-
-  // Camera follow mouse
-  camera.position.x += (mx * .6 - camera.position.x) * .04;
-  camera.position.y += (my * .35 - camera.position.y) * .04;
-  camera.lookAt(0, 0, 0);
-
-  renderer.render(scene, camera);
-})();
-
-// ── Scroll reveal (left/right/up) ─────────────────────────────────────────────
-const ro = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('in');
-      ro.unobserve(e.target);
-    }
-  });
-}, { threshold: 0.12 });
-document.querySelectorAll('.rev').forEach(el => ro.observe(el));
-
-// ── Feature card 3D tilt ──────────────────────────────────────────────────────
-document.querySelectorAll('.feat-card').forEach(card => {
-  card.addEventListener('mousemove', e => {
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    const rx = (y - .5) * 10;
-    const ry = (x - .5) * -10;
-    card.style.transform = `perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.015)`;
-    card.style.setProperty('--mx', `${x * 100}%`);
-    card.style.setProperty('--my', `${y * 100}%`);
-  });
-  card.addEventListener('mouseleave', () => {
-    card.style.transform = '';
-  });
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') gotoS(Math.min(cur + 1, 5));
+  if (e.key === 'ArrowUp'   || e.key === 'PageUp')   gotoS(Math.max(cur - 1, 0));
 });
+function gotoS(idx) {
+  sections[idx].scrollIntoView({ behavior: 'smooth' });
+}
+// nav-cta ya tiene onclick directo, no redirigir a s5
+document.getElementById('nav-cta').addEventListener('click', e => { e.preventDefault(); });
 
-// ── Hero mockup mouse parallax ────────────────────────────────────────────────
-const heroRight = document.querySelector('.hero-right');
-if (heroRight) {
-  const wrap = heroRight.querySelector('.mockup-wrap');
-  document.addEventListener('mousemove', e => {
-    const x = (e.clientX / innerWidth - .5);
-    const y = (e.clientY / innerHeight - .5);
-    wrap.style.transform = `rotateY(${-15 + x * 8}deg) rotateX(${5 - y * 5}deg) translateY(${y * -8}px)`;
-  });
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// TRIAL MODAL
+// ══════════════════════════════════════════════════════════════
+const PROXY_URL    = 'https://marvelous-blessing-production-82ba.up.railway.app';
+const PROXY_SECRET = 'TuneProGM_2025_xK9mLpQ7vR';
+
+function openTrialModal() {
+  document.getElementById('trial-overlay').classList.add('open');
+  document.getElementById('trial-email').focus();
+  document.getElementById('trial-error').classList.remove('show');
+  document.getElementById('trial-btn').disabled = false;
+  document.getElementById('trial-btn').textContent = 'Obtener acceso trial →';
 }
 
-// ── Performance bars animate on scroll ───────────────────────────────────────
-new IntersectionObserver(entries => {
-  if (entries[0].isIntersecting)
-    document.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.target + '%'; });
-}, { threshold: 0.3 }).observe(document.getElementById('perf-bars'));
+function closeTrialModal() {
+  document.getElementById('trial-overlay').classList.remove('open');
+}
+
+// Cerrar con Escape o click fuera del modal
+document.getElementById('trial-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeTrialModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeTrialModal();
+});
+
+async function requestTrial() {
+  const email = document.getElementById('trial-email').value.trim();
+  const errEl = document.getElementById('trial-error');
+  const btn   = document.getElementById('trial-btn');
+
+  errEl.classList.remove('show');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Ingresá un email válido.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Procesando...';
+
+  try {
+    const res = await fetch(`${PROXY_URL}/trial`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'X-Proxy-Secret': PROXY_SECRET,
+      },
+      body: JSON.stringify({ email, plan: 'trial' }),
+    });
+
+    const data = await res.json();
+
+    if (res.status === 409) {
+      errEl.textContent = 'Este email ya usó el trial. Si tenés problemas escribinos.';
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Obtener acceso trial →';
+      return;
+    }
+
+    if (!res.ok || !data.checkout_url) {
+      throw new Error(data.detail || 'Error del servidor');
+    }
+
+    // Éxito → redirigir al checkout de Dodo
+    window.location.href = data.checkout_url;
+
+  } catch (err) {
+    errEl.textContent = 'Algo salió mal. Intentá de nuevo en unos segundos.';
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Obtener acceso trial →';
+  }
+}
+
+// Enviar con Enter
+document.getElementById('trial-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') requestTrial();
+});
 </script>
+
+<style>
+@keyframes pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(10,124,248,.5); }
+  50%      { box-shadow:0 0 0 5px rgba(10,124,248,0); }
+}
+.site-footer{text-align:center;padding:32px 16px;font-size:.8rem;color:#666;border-top:1px solid #1e2a3a;margin-top:48px}
+.site-footer a{color:#5a8ab8;text-decoration:none}.site-footer a:hover{text-decoration:underline}
+</style>
+
+<footer class="site-footer">
+  © 2025 TuneProGM &nbsp;·&nbsp;
+  <a href="terms.html">Terms of Service</a> &nbsp;·&nbsp;
+  <a href="privacy.html">Privacy Policy</a>
+</footer>
+
 </body>
 </html>
