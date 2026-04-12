@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ignaciossimone.github.io/tuneprogm-web/sitemap.xml
