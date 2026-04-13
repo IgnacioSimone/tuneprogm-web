@@ -388,6 +388,8 @@
     align-items: center; justify-content: center;
   }
   #trial-overlay.open { display: flex; }
+  #buy-overlay { display:none; position:fixed; inset:0; z-index:9100; background:rgba(3,8,15,0.85); backdrop-filter:blur(12px); align-items:center; justify-content:center; }
+  #buy-overlay.open { display: flex; }
 
   #trial-modal {
     background: linear-gradient(145deg,#060d1a,#091422);
@@ -464,6 +466,18 @@
 <body>
 
 <!-- ── Trial Modal ─────────────────────────────────────────────── -->
+<div id="buy-overlay">
+  <div id="buy-modal" style="background:#0d1824;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:40px 36px;max-width:420px;width:90%;position:relative">
+    <button onclick="closeBuyModal()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:var(--mid);font-size:22px;cursor:pointer;line-height:1">×</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;margin-bottom:6px" id="buy-title">COMPRAR PRO</div>
+    <p style="font-size:13px;color:var(--mid);margin-bottom:20px">Ingresá tu email para continuar al pago seguro.</p>
+    <input class="modal-input" type="email" id="buy-email" placeholder="tu@email.com" autocomplete="email">
+    <button class="modal-btn" id="buy-btn" onclick="requestBuy()">Ir al pago →</button>
+    <div class="modal-error" id="buy-error"></div>
+    <p class="modal-note" style="margin-top:12px;font-size:11px;color:var(--dim);text-align:center">Pago seguro vía Dodo Payments · Pago único · Sin suscripción</p>
+  </div>
+</div>
+
 <div id="trial-overlay">
   <div id="trial-modal">
     <button class="modal-close" onclick="closeTrialModal()">×</button>
@@ -673,7 +687,8 @@
             <li><svg class="ck ckb" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>100% reversible</li>
             <li><svg class="ck ckb" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>4 idiomas</li>
           </ul>
-          <a href="#" class="pbtn bl" onclick="openTrialModal();return false;">Probar 3 días gratis</a>
+          <a href="#" class="pbtn bl" onclick="openTrialModal();return false;" style="margin-bottom:8px">Probar 3 días gratis</a>
+          <a href="#" class="pbtn" onclick="buyPlan('pro');return false;" style="background:transparent;border:1px solid rgba(10,124,248,0.4);color:var(--blue)">Comprar PRO →</a>
         </div>
         <div class="pc ft">
           <div class="ptag">RECOMENDADO</div>
@@ -687,7 +702,7 @@
             <li><svg class="ck cka" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Defender OFF durante gaming</li>
             <li><svg class="ck cka" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3"/><polyline points="5,8 7,10.5 11,6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Process Killer + Game Watcher</li>
           </ul>
-          <a href="#" class="pbtn am">Comprar PRO+</a>
+          <a href="#" class="pbtn am" onclick="buyPlan('pro_plus');return false;">Comprar PRO+</a>
         </div>
       </div>
     </div>
@@ -840,6 +855,81 @@ async function requestTrial() {
 // Enviar con Enter
 document.getElementById('trial-email').addEventListener('keydown', e => {
   if (e.key === 'Enter') requestTrial();
+});
+
+// ══════════════════════════════════════════════════════════════
+// CHECKOUT (PRO / PRO+)
+// ══════════════════════════════════════════════════════════════
+let _buyPlan = null;
+
+function buyPlan(plan) {
+  _buyPlan = plan;
+  const label = plan === 'pro_plus' ? 'PRO+ ($24.99)' : 'PRO ($14.99)';
+  document.getElementById('buy-title').textContent = 'COMPRAR ' + label;
+  document.getElementById('buy-overlay').classList.add('open');
+  document.getElementById('buy-email').value = '';
+  document.getElementById('buy-error').classList.remove('show');
+  document.getElementById('buy-btn').disabled = false;
+  document.getElementById('buy-btn').textContent = 'Ir al pago →';
+  setTimeout(() => document.getElementById('buy-email').focus(), 50);
+}
+
+function closeBuyModal() {
+  document.getElementById('buy-overlay').classList.remove('open');
+  _buyPlan = null;
+}
+
+document.getElementById('buy-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeBuyModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeBuyModal();
+});
+
+async function requestBuy() {
+  const email = document.getElementById('buy-email').value.trim();
+  const errEl = document.getElementById('buy-error');
+  const btn   = document.getElementById('buy-btn');
+
+  errEl.classList.remove('show');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Ingresá un email válido.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Procesando...';
+
+  try {
+    const res = await fetch(`${PROXY_URL}/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':   'application/json',
+        'X-Proxy-Secret': PROXY_SECRET,
+      },
+      body: JSON.stringify({ email, plan: _buyPlan }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.checkout_url) {
+      throw new Error(data.detail || 'Error del servidor');
+    }
+
+    window.location.href = data.checkout_url;
+
+  } catch (err) {
+    errEl.textContent = 'Algo salió mal. Intentá de nuevo en unos segundos.';
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Ir al pago →';
+  }
+}
+
+document.getElementById('buy-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') requestBuy();
 });
 </script>
 
