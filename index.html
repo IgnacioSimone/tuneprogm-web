@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://marvelous-blessing-production-82ba.up.railway.app; frame-ancestors 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://marvelous-blessing-production-82ba.up.railway.app; frame-ancestors 'none';">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 
@@ -88,12 +88,51 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Fixed 3D canvas behind everything ─── */
-    #c {
+    /* ── Fixed background (CSS-only, zero GPU overhead) ─── */
+    #bg {
       position: fixed;
       inset: 0;
       z-index: 0;
+      background: #03080f;
+      overflow: hidden;
     }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .o1 {
+      width: 900px; height: 900px;
+      top: -350px; left: -250px;
+      background: radial-gradient(circle, rgba(10,124,248,0.16) 0%, rgba(10,124,248,0.06) 40%, transparent 70%);
+      animation: orbMove1 22s ease-in-out infinite alternate;
+    }
+    .o2 {
+      width: 700px; height: 700px;
+      bottom: -200px; right: -150px;
+      background: radial-gradient(circle, rgba(0,212,255,0.11) 0%, rgba(0,212,255,0.04) 40%, transparent 70%);
+      animation: orbMove2 28s ease-in-out infinite alternate;
+    }
+    .o3 {
+      width: 500px; height: 500px;
+      top: 35%; right: 10%;
+      background: radial-gradient(circle, rgba(201,147,10,0.08) 0%, transparent 70%);
+      animation: orbMove3 35s ease-in-out infinite alternate;
+    }
+    #bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(10,124,248,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10,124,248,0.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+    }
+    @keyframes orbMove1 { 0%{transform:translate(0,0)} 100%{transform:translate(8vw,5vh)} }
+    @keyframes orbMove2 { 0%{transform:translate(0,0)} 100%{transform:translate(-7vw,-6vh)} }
+    @keyframes orbMove3 { 0%{transform:translate(0,0)} 100%{transform:translate(-4vw,7vh)} }
 
     /* ── Scroll container ─────────────────── */
     #sc {
@@ -439,7 +478,11 @@
 </div>
 
 <div id="pb"></div>
-<canvas id="c"></canvas>
+<div id="bg">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+</div>
 
 <nav>
   <a href="index.html" class="brand">
@@ -653,395 +696,8 @@
 
 </div><!-- /sc -->
 
-<!-- Three.js + postprocessing -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
-// ══════════════════════════════════════════════════════════════
-// THREE.JS CORE SETUP
-// ══════════════════════════════════════════════════════════════
-const W = innerWidth, H = innerHeight;
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-renderer.setSize(W, H);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x03080f);
-scene.fog = new THREE.FogExp2(0x03080f, 0.022);
-
-const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 200);
-camera.position.set(0, 0, 12);
-
-// ── Bloom post-processing ─────────────────────────────────────
-const composer = new THREE.EffectComposer(renderer);
-composer.addPass(new THREE.RenderPass(scene, camera));
-const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(W, H), 1.1, 0.6, 0.55);
-composer.addPass(bloom);
-
-// ── Lights ────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-const ptBlue  = new THREE.PointLight(0x0a7cf8, 4, 25); ptBlue.position.set(4, 3, 6); scene.add(ptBlue);
-const ptAmber = new THREE.PointLight(0xc9930a, 3, 22); ptAmber.position.set(-4, -2, 5); scene.add(ptAmber);
-
-// ══════════════════════════════════════════════════════════════
-// SHARED: hex grid plane (always present)
-// ══════════════════════════════════════════════════════════════
-const hexVert = `
-  varying vec2 vUv;
-  void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
-`;
-const hexFrag = `
-  uniform float time;
-  uniform vec3 uColor;
-  varying vec2 vUv;
-
-  float hexDist(vec2 p) {
-    p = abs(p);
-    return max(dot(p, normalize(vec2(1.0,1.732))), p.x);
-  }
-  vec4 hexCoords(vec2 uv) {
-    vec2 r = vec2(1.0, 1.732);
-    vec2 h = r * 0.5;
-    vec2 a = mod(uv, r) - h;
-    vec2 b = mod(uv - h, r) - h;
-    return dot(a,a) < dot(b,b) ? vec4(a, floor((uv)/r)) : vec4(b, floor((uv-h)/r));
-  }
-  void main() {
-    vec2 uv = (vUv - 0.5) * vec2(28.0, 16.0);
-    vec4 hc = hexCoords(uv);
-    float d = hexDist(hc.xy);
-    float edge = 1.0 - smoothstep(0.44, 0.46, d);
-    float dist = length(vUv - 0.5);
-    float fade = 1.0 - smoothstep(0.2, 0.55, dist);
-    float pulse = 0.6 + 0.4 * sin(time * 0.6 + length(hc.zw) * 0.8);
-    gl_FragColor = vec4(uColor * edge * fade * pulse * 0.55, edge * fade * 0.4);
-  }
-`;
-const hexMat = new THREE.ShaderMaterial({
-  uniforms: { time: { value: 0 }, uColor: { value: new THREE.Vector3(0.04, 0.49, 0.97) } },
-  vertexShader: hexVert, fragmentShader: hexFrag,
-  transparent: true, depthWrite: false, side: THREE.DoubleSide
-});
-const hexPlane = new THREE.Mesh(new THREE.PlaneGeometry(40, 24), hexMat);
-hexPlane.rotation.x = -Math.PI / 2.8;
-hexPlane.position.set(0, -5, -4);
-scene.add(hexPlane);
-
-// ── Star field background ─────────────────────────────────────
-const starFrag = `
-  uniform float uTime;
-  varying vec2 vUv;
-  float h21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5); }
-  void main(){
-    vec2 uv = vUv * vec2(90.0, 55.0);
-    vec2 cell = floor(uv);
-    vec2 loc  = fract(uv);
-    float star = 0.0;
-    for(int i=-1;i<=1;i++){for(int j=-1;j<=1;j++){
-      vec2 off = vec2(float(i),float(j));
-      vec2 pos = h21(cell+off+vec2(13.7,0.0))*0.78+0.11+off;
-      float br  = h21(cell+off);
-      float twk = 0.65+0.35*sin(uTime*(0.8+br*1.5)+br*6.28);
-      float d   = length(loc - pos);
-      star += smoothstep(0.045,0.0,d)*br*twk;
-    }}
-    gl_FragColor = vec4(vec3(star), star*0.75);
-  }
-`;
-const starMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: { value: 0 } },
-  vertexShader: hexVert, fragmentShader: starFrag,
-  transparent: true, depthWrite: false,
-});
-const starPlane = new THREE.Mesh(new THREE.PlaneGeometry(80, 50), starMat);
-starPlane.position.z = -22;
-scene.add(starPlane);
-
-// ══════════════════════════════════════════════════════════════
-// SHARED: floating particles — GPU shader (zero CPU per frame)
-// ══════════════════════════════════════════════════════════════
-const N_PARTICLES = 500;
-(function buildParticles() {
-  const positions = new Float32Array(N_PARTICLES * 3);
-  const phases    = new Float32Array(N_PARTICLES);
-  const speeds    = new Float32Array(N_PARTICLES);
-  const sizes     = new Float32Array(N_PARTICLES);
-  for (let i = 0; i < N_PARTICLES; i++) {
-    positions[i*3]   = (Math.random()-.5)*36;
-    positions[i*3+1] = (Math.random()-.5)*22;
-    positions[i*3+2] = (Math.random()-.5)*16 - 3;
-    phases[i]  = Math.random()*Math.PI*2;
-    speeds[i]  = .15 + Math.random()*.4;
-    sizes[i]   = 2.5 + Math.random()*4.5;
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('aPhase',   new THREE.BufferAttribute(phases, 1));
-  geo.setAttribute('aSpeed',   new THREE.BufferAttribute(speeds, 1));
-  geo.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1));
-  const mat = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uColor: { value: new THREE.Color(0x0a7cf8) } },
-    vertexShader: `
-      attribute float aPhase; attribute float aSpeed; attribute float aSize;
-      uniform float uTime;
-      void main(){
-        vec3 p = position;
-        p.x += sin(uTime*aSpeed*.7+aPhase)*.35;
-        p.y += sin(uTime*aSpeed   +aPhase)*.55;
-        float sc = .4+.6*(sin(uTime*aSpeed+aPhase)*.5+.5);
-        vec4 mv = modelViewMatrix*vec4(p,1.0);
-        gl_PointSize = aSize*sc*(350.0/-mv.z);
-        gl_Position = projectionMatrix*mv;
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 uColor;
-      void main(){
-        float d = length(gl_PointCoord-.5);
-        float a = 1.0-smoothstep(.35,.5,d);
-        gl_FragColor = vec4(uColor, a*.75);
-      }
-    `,
-    transparent: true, depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  });
-  window._particleMat = mat;
-  scene.add(new THREE.Points(geo, mat));
-})();
-
-// ══════════════════════════════════════════════════════════════
-// SECTION GROUPS
-// ══════════════════════════════════════════════════════════════
-const grps = [];
-for (let i = 0; i < 6; i++) { const g = new THREE.Group(); g.visible = false; scene.add(g); grps.push(g); }
-
-// ── S0: Hero — DNA-style double helix rings ───────────────────
-function mkS0() {
-  const g = grps[0];
-  const ring1 = new THREE.Mesh(
-    new THREE.TorusGeometry(2.8, 0.06, 16, 120),
-    new THREE.MeshStandardMaterial({ color: 0x0a7cf8, emissive: 0x0a7cf8, emissiveIntensity: 2.5, transparent: true, opacity: .9 })
-  );
-  const ring2 = new THREE.Mesh(
-    new THREE.TorusGeometry(2.1, 0.04, 12, 100),
-    new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 2.0, transparent: true, opacity: .7 })
-  );
-  ring2.rotation.set(1.2, 0.4, 0.2);
-  const ring3 = new THREE.Mesh(
-    new THREE.TorusGeometry(3.6, 0.025, 8, 80),
-    new THREE.MeshStandardMaterial({ color: 0xc9930a, emissive: 0xc9930a, emissiveIntensity: 1.5, transparent: true, opacity: .4 })
-  );
-  ring3.rotation.set(0.6, 1.1, 0.8);
-  const core = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(.5, 1),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x55aaff, emissiveIntensity: 3, wireframe: true, transparent: true, opacity: .8 })
-  );
-  g.add(ring1, ring2, ring3, core);
-  g.userData = { ring1, ring2, ring3, core };
-}
-mkS0();
-
-// ── S1: FPS — 3D rising bars ──────────────────────────────────
-function mkS1() {
-  const g = grps[1];
-  const colors = [0x0a7cf8, 0x1e90ff, 0x00d4ff];
-  const heights = [3.2, 4.8, 2.4];
-  const bars = [];
-  for (let i = 0; i < 3; i++) {
-    const h = heights[i];
-    const geo = new THREE.BoxGeometry(.7, h, .7);
-    const mat = new THREE.MeshStandardMaterial({ color: colors[i], emissive: colors[i], emissiveIntensity: 1.5, transparent: true, opacity: .85 });
-    const bar = new THREE.Mesh(geo, mat);
-    bar.position.set((i - 1) * 1.4, -6, 0);
-    bar.scale.y = 0; // starts at 0, animates in
-    bar.userData.targetY = 1;
-    bars.push(bar);
-    g.add(bar);
-  }
-
-  // Speed lines
-  const linesGeo = new THREE.BufferGeometry();
-  const lPts = [];
-  for (let i = 0; i < 30; i++) {
-    const x = (Math.random() - .5) * 20;
-    const y = (Math.random() - .5) * 12;
-    const z = -2 + Math.random() * 2;
-    lPts.push(x - 2, y, z, x + 2, y, z);
-  }
-  linesGeo.setAttribute('position', new THREE.Float32BufferAttribute(lPts, 3));
-  const lines = new THREE.LineSegments(linesGeo, new THREE.LineBasicMaterial({ color: 0x0a7cf8, transparent: true, opacity: .15 }));
-  g.add(lines);
-  g.userData = { bars, lines };
-}
-mkS1();
-
-// ── S2: Network — node graph with packets ─────────────────────
-function mkS2() {
-  const g = grps[2];
-  const nodePositions = [];
-  const nodes = [];
-  const nMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 2, transparent: true, opacity: .85 });
-  for (let i = 0; i < 28; i++) {
-    const x = (Math.random() - .5) * 14;
-    const y = (Math.random() - .5) * 9;
-    const z = (Math.random() - .5) * 6 - 2;
-    nodePositions.push(new THREE.Vector3(x, y, z));
-    const node = new THREE.Mesh(new THREE.SphereGeometry(.09 + Math.random() * .08, 6, 6), nMat);
-    node.position.set(x, y, z);
-    node.userData = { ox: x, oy: y, sp: .2 + Math.random() * .3, ph: Math.random() * Math.PI * 2 };
-    g.add(node);
-    nodes.push(node);
-  }
-  // Edges
-  const edgePts = [];
-  const edgePairs = [];
-  for (let i = 0; i < nodePositions.length; i++) {
-    for (let j = i + 1; j < nodePositions.length; j++) {
-      if (nodePositions[i].distanceTo(nodePositions[j]) < 5.5) {
-        edgePts.push(nodePositions[i].x, nodePositions[i].y, nodePositions[i].z);
-        edgePts.push(nodePositions[j].x, nodePositions[j].y, nodePositions[j].z);
-        edgePairs.push([i, j]);
-      }
-    }
-  }
-  const edgeGeo = new THREE.BufferGeometry();
-  edgeGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePts, 3));
-  g.add(new THREE.LineSegments(edgeGeo, new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: .1 })));
-
-  // Packets flying along random edges
-  const packets = [];
-  for (let k = 0; k < 12; k++) {
-    const pair = edgePairs[Math.floor(Math.random() * edgePairs.length)] || [0,1];
-    const pm = new THREE.Mesh(new THREE.SphereGeometry(.07, 6, 6),
-      new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 3 }));
-    pm.userData = {
-      from: nodePositions[pair[0]].clone(),
-      to:   nodePositions[pair[1]].clone(),
-      t: Math.random(), sp: .3 + Math.random() * .5,
-    };
-    packets.push(pm);
-    g.add(pm);
-  }
-  g.userData = { packets, nodePositions, nodes };
-}
-mkS2();
-
-// ── S3: PRO+ — pulsing amber diamond ─────────────────────────
-function mkS3() {
-  const g = grps[3];
-  const oct = new THREE.Mesh(
-    new THREE.OctahedronGeometry(1.8, 0),
-    new THREE.MeshStandardMaterial({ color: 0xc9930a, emissive: 0xc9930a, emissiveIntensity: 2.5, wireframe: false, metalness: .3, roughness: .2 })
-  );
-  const octWire = new THREE.Mesh(
-    new THREE.OctahedronGeometry(1.85, 0),
-    new THREE.MeshBasicMaterial({ color: 0xf0b429, wireframe: true, transparent: true, opacity: .5 })
-  );
-  const rings = [];
-  for (let i = 0; i < 3; i++) {
-    const r = new THREE.Mesh(
-      new THREE.TorusGeometry(2.4 + i * .8, 0.02 + i * .005, 8, 80),
-      new THREE.MeshBasicMaterial({ color: 0xc9930a, transparent: true, opacity: .35 - i * .08 })
-    );
-    r.rotation.x = i * 0.7;
-    r.rotation.y = i * 0.4;
-    rings.push(r);
-    g.add(r);
-  }
-  // Amber particles burst
-  const burstGeo = new THREE.BufferGeometry();
-  const burstPts = [];
-  for (let i = 0; i < 200; i++) {
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI;
-    const r = 2.5 + Math.random() * 3;
-    burstPts.push(Math.sin(phi) * Math.cos(theta) * r, Math.cos(phi) * r, Math.sin(phi) * Math.sin(theta) * r);
-  }
-  burstGeo.setAttribute('position', new THREE.Float32BufferAttribute(burstPts, 3));
-  const burst = new THREE.Points(burstGeo, new THREE.PointsMaterial({ color: 0xf0b429, size: .07, transparent: true, opacity: .7 }));
-  g.add(oct, octWire, burst);
-  g.userData = { oct, octWire, rings, burst };
-}
-mkS3();
-
-// ── S4: Reversible — two orbs + energy beam ───────────────────
-function mkS4() {
-  const g = grps[4];
-  const matGray = new THREE.MeshStandardMaterial({ color: 0x3d4f62, emissive: 0x1a2535, emissiveIntensity: .8, transparent: true, opacity: .85 });
-  const matGreen = new THREE.MeshStandardMaterial({ color: 0x00e676, emissive: 0x00e676, emissiveIntensity: 2.5, transparent: true, opacity: .85 });
-  const orbA = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 2), matGray);
-  const orbB = new THREE.Mesh(new THREE.IcosahedronGeometry(1.1, 2), matGreen);
-  orbA.position.set(-2.5, 0, 0);
-  orbB.position.set(2.5, 0, 0);
-
-  // Wireframe shells
-  const wA = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 2), new THREE.MeshBasicMaterial({ color: 0x3d4f62, wireframe: true, transparent: true, opacity: .25 }));
-  const wB = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 2), new THREE.MeshBasicMaterial({ color: 0x00e676, wireframe: true, transparent: true, opacity: .3 }));
-  wA.position.copy(orbA.position);
-  wB.position.copy(orbB.position);
-
-  // Energy beam connecting them
-  const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-2.5, 0, 0),
-    new THREE.Vector3(0, .8, 0),
-    new THREE.Vector3(2.5, 0, 0),
-  ]);
-  const beam = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 30, 0.03, 8, false),
-    new THREE.MeshStandardMaterial({ color: 0x00e676, emissive: 0x00e676, emissiveIntensity: 3, transparent: true, opacity: .7 })
-  );
-
-  // Orbiting particles around green orb
-  const orbPts = [];
-  for (let i = 0; i < 40; i++) {
-    const a = (i / 40) * Math.PI * 2;
-    orbPts.push(Math.cos(a) * 1.6 + 2.5, Math.sin(a) * 1.6, 0);
-  }
-  const orbGeo = new THREE.BufferGeometry().setFromPoints(
-    Array.from({ length: 40 }, (_, i) => {
-      const a = (i / 40) * Math.PI * 2;
-      return new THREE.Vector3(Math.cos(a) * 1.6 + 2.5, Math.sin(a) * 1.6, 0);
-    })
-  );
-  const orbRing = new THREE.Points(orbGeo, new THREE.PointsMaterial({ color: 0x00e676, size: .07, transparent: true, opacity: .6 }));
-
-  g.add(orbA, orbB, wA, wB, beam, orbRing);
-  g.userData = { orbA, orbB, wA, wB, beam, orbRing };
-}
-mkS4();
-
-// ── S5: Pricing — two floating spheres ────────────────────────
-function mkS5() {
-  const g = grps[5];
-  const sphBlue = new THREE.Mesh(
-    new THREE.SphereGeometry(1.8, 20, 20),
-    new THREE.MeshStandardMaterial({ color: 0x0a7cf8, emissive: 0x0a7cf8, emissiveIntensity: 1.8, transparent: true, opacity: .18, wireframe: false })
-  );
-  const sphAmber = new THREE.Mesh(
-    new THREE.SphereGeometry(1.8, 20, 20),
-    new THREE.MeshStandardMaterial({ color: 0xc9930a, emissive: 0xc9930a, emissiveIntensity: 1.8, transparent: true, opacity: .18 })
-  );
-  sphBlue.position.set(-3.5, 0, 0);
-  sphAmber.position.set(3.5, 0, 0);
-  // Wireframes
-  const wb = new THREE.Mesh(new THREE.SphereGeometry(1.82, 12, 12), new THREE.MeshBasicMaterial({ color: 0x0a7cf8, wireframe: true, transparent: true, opacity: .2 }));
-  const wa = new THREE.Mesh(new THREE.SphereGeometry(1.82, 12, 12), new THREE.MeshBasicMaterial({ color: 0xc9930a, wireframe: true, transparent: true, opacity: .2 }));
-  wb.position.copy(sphBlue.position);
-  wa.position.copy(sphAmber.position);
-  g.add(sphBlue, sphAmber, wb, wa);
-  g.userData = { sphBlue, sphAmber, wb, wa };
-}
-mkS5();
-
 // ══════════════════════════════════════════════════════════════
 // SECTION MANAGEMENT
 // ══════════════════════════════════════════════════════════════
@@ -1049,107 +705,38 @@ const sections = Array.from(document.querySelectorAll('.s'));
 const dots = document.querySelectorAll('.dot');
 const container = document.getElementById('sc');
 const pb = document.getElementById('pb');
-let cur = 0;
-let mx = 0, my = 0;
-
-// Theme per section
-const themes = [
-  { bloomStr: 1.5, camZ: 12, bloomColor: [0.04,.49,.97], hexColor: [0.04,.49,.97] },
-  { bloomStr: 1.3, camZ: 11, bloomColor: [0.04,.49,.97], hexColor: [0.04,.49,.97] },
-  { bloomStr: 1.4, camZ: 11, bloomColor: [0.0,.83,1.0],  hexColor: [0.0,.83,1.0]  },
-  { bloomStr: 2.0, camZ: 10, bloomColor: [0.79,.58,.04], hexColor: [0.79,.58,.04] },
-  { bloomStr: 1.2, camZ: 12, bloomColor: [0.0,.9,.46],   hexColor: [0.0,.9,.46]   },
-  { bloomStr: 0.9, camZ: 12, bloomColor: [0.04,.49,.97], hexColor: [0.04,.49,.97] },
-];
-
+let cur = -1;
 const animated = new Set();
 
 function activateSection(idx) {
-  if (idx === cur && idx !== 0) return;
-  const prev = cur;
+  if (idx === cur) return;
   cur = idx;
 
-  // Update theme with GSAP
-  const th = themes[idx];
-  gsap.to(bloom, { strength: th.bloomStr, duration: 1.2, ease: 'power2.out' });
-  gsap.to(camera.position, { z: th.camZ, duration: 1.2, ease: 'power2.out' });
-
-  // Hex grid color
-  gsap.to(hexMat.uniforms.uColor.value, {
-    x: th.hexColor[0], y: th.hexColor[1], z: th.hexColor[2], duration: 1.2
-  });
-
-  // Point lights
-  if (idx === 3) {
-    gsap.to(ptAmber, { intensity: 8, duration: 1 });
-    gsap.to(ptBlue,  { intensity: 1, duration: 1 });
-  } else {
-    gsap.to(ptBlue,  { intensity: 4, duration: 1 });
-    gsap.to(ptAmber, { intensity: 3, duration: 1 });
-  }
-
-  // Particle color
-  const pColors = [0x0a7cf8, 0x0a7cf8, 0x00d4ff, 0xc9930a, 0x00e676, 0x0a7cf8];
-  gsap.to(window._particleMat.uniforms.uColor.value, {
-    r: ((pColors[idx]>>16)&0xff)/255,
-    g: ((pColors[idx]>>8)&0xff)/255,
-    b: (pColors[idx]&0xff)/255,
-    duration: 1.2
-  });
-
-  // Smooth fade between sections
-  if (prev !== idx) {
-    grps[prev].traverse(obj => {
-      if (obj.material) gsap.to(obj.material, { opacity: 0, duration: .4, onComplete: () => { grps[prev].visible = false; } });
-    });
-  }
-  grps[idx].visible = true;
-  grps[idx].traverse(obj => {
-    if (obj.material && obj.material.transparent) {
-      const target = obj.material.opacity || obj.material.userData._origOpacity || .85;
-      if (!obj.material.userData._origOpacity) obj.material.userData._origOpacity = obj.material.opacity;
-      obj.material.opacity = 0;
-      gsap.to(obj.material, { opacity: target, duration: .6, ease: 'power2.out' });
-    }
-  });
-
-  // Dots
   dots.forEach((d, i) => {
     d.classList.remove('on', 'on-amber');
     if (i === idx) d.classList.add(idx === 3 ? 'on-amber' : 'on');
   });
 
-  // Progress bar
   const pct = (idx / (sections.length - 1)) * 100;
   pb.style.width = pct + '%';
   pb.style.background = idx === 3
     ? 'linear-gradient(90deg,#c9930a,#f0b429)'
     : 'linear-gradient(90deg,#0a7cf8,#00d4ff)';
 
-  // Animate HTML elements
   if (!animated.has(idx)) {
     animated.add(idx);
     const sec = sections[idx];
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.to(sec.querySelectorAll('.al'), { opacity:1, x:0, duration:.75, stagger:.1 }, 0);
-    tl.to(sec.querySelectorAll('.ar'), { opacity:1, x:0, duration:.75, stagger:.1 }, 0.08);
-    tl.to(sec.querySelectorAll('.au'), { opacity:1, y:0, duration:.65, stagger:.1  }, 0.15);
-    tl.to(sec.querySelectorAll('.asc'),{ opacity:1, scale:1, duration:.65 }, 0.2);
-    // Bars
+    tl.to(sec.querySelectorAll('.al'),  { opacity:1, x:0,     duration:.75, stagger:.1  }, 0);
+    tl.to(sec.querySelectorAll('.ar'),  { opacity:1, x:0,     duration:.75, stagger:.1  }, 0.08);
+    tl.to(sec.querySelectorAll('.au'),  { opacity:1, y:0,     duration:.65, stagger:.1  }, 0.15);
+    tl.to(sec.querySelectorAll('.asc'), { opacity:1, scale:1, duration:.65              }, 0.2);
     sec.querySelectorAll('[data-w]').forEach(b => {
       tl.to(b, { width: b.dataset.w + '%', duration:1.3, ease:'power2.out' }, 0.5);
     });
-    // S1: animate 3D bars
-    if (idx === 1) {
-      grps[1].userData.bars.forEach((bar, i) => {
-        gsap.to(bar.scale, { y: 1, duration: 1, delay: i * .15, ease: 'power3.out' });
-        gsap.to(bar.position, { y: 0, duration: 1, delay: i * .15, ease: 'power3.out' });
-      });
-    }
   }
 }
 
-// IntersectionObserver for scroll-snap sections
 const io = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) activateSection(sections.indexOf(e.target));
@@ -1157,137 +744,11 @@ const io = new IntersectionObserver(entries => {
 }, { threshold: 0.55, root: container });
 sections.forEach(s => io.observe(s));
 
-// Init hero
-grps[0].visible = true;
 setTimeout(() => activateSection(0), 100);
-
-// ══════════════════════════════════════════════════════════════
-// ANIMATION LOOP
-// ══════════════════════════════════════════════════════════════
-const clock = new THREE.Clock();
-let t = 0;
-let _animActive = true;
-function animate() {
-  if (!_animActive) return;
-  requestAnimationFrame(animate);
-  const dt = Math.min(clock.getDelta(), .05); // cap delta (tab unfocus spike)
-  t += dt;
-
-  // Shaders time
-  hexMat.uniforms.time.value = t;
-  starMat.uniforms.uTime.value = t * .3;
-  window._particleMat.uniforms.uTime.value = t;
-
-  // Camera mouse follow
-  camera.position.x += (mx * .5 - camera.position.x) * .04;
-  camera.position.y += (my * .3 - camera.position.y) * .04;
-  camera.lookAt(0, 0, 0);
-
-  // ── S0 animations ──────────────────────────────────────────
-  if (cur === 0) {
-    const { ring1, ring2, ring3, core } = grps[0].userData;
-    ring1.rotation.z = t * .4;
-    ring1.rotation.x = t * .15 + my * .1;
-    ring2.rotation.z = -t * .3;
-    ring2.rotation.y = t * .2 + mx * .08;
-    ring3.rotation.y = t * .18;
-    ring3.rotation.z = -t * .12;
-    core.rotation.y = t * .6;
-    core.scale.setScalar(1 + Math.sin(t * 2.5) * .12);
-  }
-
-  // ── S1 animations ──────────────────────────────────────────
-  if (cur === 1) {
-    const { bars, lines } = grps[1].userData;
-    bars.forEach((b, i) => {
-      b.material.emissiveIntensity = 1.5 + Math.sin(t * 2 + i) * .5;
-    });
-    lines.material.opacity = .1 + Math.abs(Math.sin(t * 1.2)) * .1;
-    lines.position.x = Math.sin(t * .3) * .5;
-  }
-
-  // ── S2 animations ──────────────────────────────────────────
-  if (cur === 2) {
-    const { packets, nodePositions } = grps[2].userData;
-    packets.forEach(pk => {
-      pk.userData.t += pk.userData.sp * .008;
-      if (pk.userData.t > 1) pk.userData.t = 0;
-      pk.position.lerpVectors(pk.userData.from, pk.userData.to, pk.userData.t);
-      pk.material.emissiveIntensity = 2 + Math.sin(t * 4 + pk.userData.t * 10) * 1.5;
-    });
-    // Nodes drift
-    grps[2].userData.nodes.forEach(ch => {
-      ch.position.y = ch.userData.oy + Math.sin(t * ch.userData.sp + ch.userData.ph) * .4;
-    });
-  }
-
-  // ── S3 animations ──────────────────────────────────────────
-  if (cur === 3) {
-    const { oct, octWire, rings, burst } = grps[3].userData;
-    oct.rotation.y = t * .4;
-    oct.rotation.x = t * .25;
-    octWire.rotation.y = -t * .3;
-    octWire.rotation.x = -t * .2;
-    oct.material.emissiveIntensity = 2 + Math.sin(t * 2.5) * 1;
-    rings.forEach((r, i) => {
-      r.rotation.z = t * (.2 + i * .1);
-      r.rotation.x = t * (.15 + i * .08);
-    });
-    burst.rotation.y = t * .08;
-  }
-
-  // ── S4 animations ──────────────────────────────────────────
-  if (cur === 4) {
-    const { orbA, orbB, wA, wB, orbRing } = grps[4].userData;
-    orbA.rotation.y = t * .3;
-    orbB.rotation.y = -t * .35;
-    wA.rotation.y = -t * .2;
-    wB.rotation.y = t * .25;
-    orbRing.rotation.z = t * .5;
-    orbB.material.emissiveIntensity = 2 + Math.sin(t * 3) * .8;
-  }
-
-  // ── S5 animations ──────────────────────────────────────────
-  if (cur === 5) {
-    const { sphBlue, sphAmber, wb, wa } = grps[5].userData;
-    sphBlue.rotation.y = t * .25;
-    sphAmber.rotation.y = -t * .2;
-    wb.rotation.y = -t * .15;
-    wa.rotation.y = t * .15;
-    sphBlue.position.y  = Math.sin(t * .7) * .4;
-    sphAmber.position.y = Math.sin(t * .7 + 1) * .4;
-    wb.position.y = sphBlue.position.y;
-    wa.position.y = sphAmber.position.y;
-  }
-
-  composer.render();
-}
-animate();
-
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    _animActive = false;
-  } else {
-    _animActive = true;
-    clock.getDelta(); // flush accumulated delta from while hidden
-    requestAnimationFrame(animate);
-  }
-});
 
 // ══════════════════════════════════════════════════════════════
 // EVENTS
 // ══════════════════════════════════════════════════════════════
-document.addEventListener('mousemove', e => {
-  mx = (e.clientX / innerWidth - .5) * 2;
-  my = -(e.clientY / innerHeight - .5) * 2;
-}, { passive: true });
-window.addEventListener('resize', () => {
-  const W = innerWidth, H = innerHeight;
-  camera.aspect = W / H;
-  camera.updateProjectionMatrix();
-  renderer.setSize(W, H);
-  composer.setSize(W, H);
-});
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowDown' || e.key === 'PageDown') gotoS(Math.min(cur + 1, 5));
   if (e.key === 'ArrowUp'   || e.key === 'PageUp')   gotoS(Math.max(cur - 1, 0));
@@ -1295,8 +756,6 @@ document.addEventListener('keydown', e => {
 function gotoS(idx) {
   sections[idx].scrollIntoView({ behavior: 'smooth' });
 }
-// nav-cta ya tiene onclick directo, no redirigir a s5
-document.getElementById('nav-cta').addEventListener('click', e => { e.preventDefault(); });
 
 </script>
 
